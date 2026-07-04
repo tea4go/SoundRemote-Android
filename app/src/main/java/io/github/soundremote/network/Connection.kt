@@ -79,7 +79,7 @@ internal class Connection(
             _state.value = value
         }
 
-    private val _processAudio = AtomicBoolean(true)
+    private val _processAudio = AtomicBoolean(false)
     var processAudio: Boolean
         get() {
             return _processAudio.get()

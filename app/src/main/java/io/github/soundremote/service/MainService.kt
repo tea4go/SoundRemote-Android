@@ -71,8 +71,8 @@ internal class MainService : Service() {
     val systemMessages: ReceiveChannel<SystemMessage>
         get() = _systemMessages
 
-    private val uncompressedAudio = Channel<ByteBuffer>(5, BufferOverflow.SUSPEND)
-    private val opusAudio = Channel<ByteBuffer>(5, BufferOverflow.SUSPEND)
+    private val uncompressedAudio = Channel<ByteBuffer>(5, BufferOverflow.DROP_OLDEST)
+    private val opusAudio = Channel<ByteBuffer>(5, BufferOverflow.DROP_OLDEST)
     private val packetsLost = AtomicInteger()
 
     private val connection = Connection(uncompressedAudio, opusAudio, packetsLost, _systemMessages)
