@@ -13,6 +13,8 @@ interface HotkeyRepository {
 
     suspend fun changeFavoured(id: Int, favoured: Boolean)
 
+    suspend fun changeColorIndex(id: Int, colorIndex: Int)
+
     fun getFavouredOrdered(favoured: Boolean): Flow<List<HotkeyInfo>>
 
     fun getAllOrdered(): Flow<List<Hotkey>>

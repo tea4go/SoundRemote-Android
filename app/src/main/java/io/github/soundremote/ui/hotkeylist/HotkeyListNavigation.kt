@@ -31,6 +31,9 @@ fun NavGraphBuilder.hotkeyListScreen(
             onChangeFavoured = { hotkeyId, favoured ->
                 viewModel.changeFavoured(hotkeyId, favoured)
             },
+            onChangeColorIndex = { hotkeyId, colorIndex ->
+                viewModel.changeColorIndex(hotkeyId, colorIndex)
+            },
             onMove = { fromIndex: Int, toIndex: Int ->
                 viewModel.moveHotkey(fromIndex, toIndex)
             },

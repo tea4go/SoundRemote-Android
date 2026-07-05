@@ -54,6 +54,14 @@
     <string name="action_hotkey_create">创建</string>
     <string name="drag_handle_description">拖动手柄</string>
     <string name="hotkey_actions_menu_description">操作菜单</string>
+    <string name="hotkey_color_title">配色</string>
+    <string name="hotkey_color_auto">自动（按位置）</string>
+    <string name="hotkey_color_green">绿色</string>
+    <string name="hotkey_color_yellow">黄色</string>
+    <string name="hotkey_color_pink">粉色</string>
+    <string name="hotkey_color_purple">紫色</string>
+    <string name="hotkey_color_gray">灰色</string>
+    <string name="hotkey_color_blue">蓝色</string>
 
     <!--Hotkey edit-->
     <string name="hotkey_create_title">创建快捷键</string>

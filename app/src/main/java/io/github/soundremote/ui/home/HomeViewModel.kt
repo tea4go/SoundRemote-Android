@@ -35,6 +35,7 @@ data class HomeHotkeyUIState(
     val id: Int,
     val name: String,
     val description: HotkeyDescription,
+    val colorIndex: Int,
 )
 
 @HiltViewModel
@@ -57,6 +58,7 @@ internal class HomeViewModel @Inject constructor(
                     keyCode = hotkey.keyCode,
                     mods = hotkey.mods
                 ),
+                colorIndex = hotkey.colorIndex,
             )
         }
         HomeUIState(

@@ -27,11 +27,21 @@ interface HotkeyDao : BaseDao<Hotkey> {
 
     @Query(
         """
+            UPDATE ${Hotkey.TABLE_NAME}
+            SET ${Hotkey.COLUMN_COLOR_INDEX} = :colorIndex
+            WHERE ${Hotkey.COLUMN_ID} = :id;
+        """
+    )
+    suspend fun changeColorIndex(id: Int, colorIndex: Int)
+
+    @Query(
+        """
         SELECT
         ${Hotkey.COLUMN_ID},
         ${Hotkey.COLUMN_KEY_CODE},
         ${Hotkey.COLUMN_MODS},
-        ${Hotkey.COLUMN_NAME}
+        ${Hotkey.COLUMN_NAME},
+        ${Hotkey.COLUMN_COLOR_INDEX}
         FROM ${Hotkey.TABLE_NAME}
         WHERE ${Hotkey.COLUMN_FAVOURED} = :favoured
         ORDER BY ${Hotkey.COLUMN_ORDER} DESC, ${Hotkey.COLUMN_ID};
@@ -52,7 +62,8 @@ interface HotkeyDao : BaseDao<Hotkey> {
         SELECT ${Hotkey.COLUMN_ID},
         ${Hotkey.COLUMN_KEY_CODE},
         ${Hotkey.COLUMN_MODS},
-        ${Hotkey.COLUMN_NAME}
+        ${Hotkey.COLUMN_NAME},
+        ${Hotkey.COLUMN_COLOR_INDEX}
         FROM ${Hotkey.TABLE_NAME}
         ORDER BY ${Hotkey.COLUMN_ORDER} DESC, ${Hotkey.COLUMN_ID};
         """

@@ -251,7 +251,10 @@ fun HomeScreen(
                     .weight(1f, fill = false),
             ) {
                 itemsIndexed(items = uiState.hotkeys, key = { _, item -> item.id }) { idx, hotkey ->
-                    val palette = hotkeyPalettes[idx % hotkeyPalettes.size]
+                    // 优先使用热键自身保存的 colorIndex；-1 时回退到按位置循环分配
+                    val paletteIdx = hotkey.colorIndex.takeIf { it in hotkeyPalettes.indices }
+                        ?: (idx % hotkeyPalettes.size)
+                    val palette = hotkeyPalettes[paletteIdx]
                     HotkeyItem(
                         name = hotkey.name,
                         description = hotkey.description.asString(),
@@ -493,12 +496,14 @@ private fun HomePreview() {
                     HomeHotkeyUIState(
                         ++id,
                         "X",
-                        HotkeyDescription.WithString("X")
+                        HotkeyDescription.WithString("X"),
+                        colorIndex = -1,
                     ),
                     HomeHotkeyUIState(
                         ++id,
                         "Volume up",
-                        HotkeyDescription.WithLabelId("Ctrl + Alt + ", R.string.key_delete)
+                        HotkeyDescription.WithLabelId("Ctrl + Alt + ", R.string.key_delete),
+                        colorIndex = -1,
                     ),
                 ),
                 connectionState = connectionState,

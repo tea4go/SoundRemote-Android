@@ -14,10 +14,11 @@ import io.github.soundremote.data.Hotkey
         Hotkey::class,
         EventAction::class
     ],
-    version = 3,
+    version = 4,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = DatabaseMigrations.Schema1to2::class),
         AutoMigration(from = 2, to = 3, spec = DatabaseMigrations.Schema2to3::class),
+        AutoMigration(from = 3, to = 4),
     ],
     exportSchema = true,
 )

@@ -58,6 +58,14 @@
     <string name="action_hotkey_create">Create</string>
     <string name="drag_handle_description">Drag handle</string>
     <string name="hotkey_actions_menu_description">Actions menu</string>
+    <string name="hotkey_color_title">Color</string>
+    <string name="hotkey_color_auto">Auto (by position)</string>
+    <string name="hotkey_color_green">Green</string>
+    <string name="hotkey_color_yellow">Yellow</string>
+    <string name="hotkey_color_pink">Pink</string>
+    <string name="hotkey_color_purple">Purple</string>
+    <string name="hotkey_color_gray">Gray</string>
+    <string name="hotkey_color_blue">Blue</string>
 
     <!--Hotkey edit-->
     <string name="hotkey_create_title">Create hotkey</string>

@@ -49,6 +49,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.soundremote.R
+import io.github.soundremote.data.Hotkey
 import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.ListItemSupport
 import io.github.soundremote.ui.components.NavigateUpButton
@@ -71,6 +73,7 @@ internal fun HotkeyListScreen(
     onNavigateToHotkeyEdit: (hotkeyId: Int) -> Unit,
     onDelete: (id: Int) -> Unit,
     onChangeFavoured: (id: Int, favoured: Boolean) -> Unit,
+    onChangeColorIndex: (id: Int, colorIndex: Int) -> Unit,
     onMove: (fromIndex: Int, toIndex: Int) -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
@@ -97,6 +100,7 @@ internal fun HotkeyListScreen(
         HotkeyList(
             hotkeys = state.hotkeys,
             onChangeFavoured = onChangeFavoured,
+            onChangeColorIndex = onChangeColorIndex,
             onEdit = onNavigateToHotkeyEdit,
             onMove = onMove,
             onDelete = onDelete,
@@ -108,10 +112,13 @@ internal fun HotkeyListScreen(
 data class VisibleItemInfo(var index: Int, var offset: Int)
 private data class DeleteInfo(val id: Int, val name: String) : Serializable
 
+private enum class MenuPage { Main, Color }
+
 @Composable
 private fun HotkeyList(
     hotkeys: List<HotkeyUIState>,
     onChangeFavoured: (Int, Boolean) -> Unit,
+    onChangeColorIndex: (Int, Int) -> Unit,
     onEdit: (Int) -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     onDelete: (Int) -> Unit,
@@ -154,7 +161,9 @@ private fun HotkeyList(
                 name = hotkeyState.name,
                 description = hotkeyState.description.asString(),
                 favoured = hotkeyState.favoured,
+                colorIndex = hotkeyState.colorIndex,
                 onChangeFavoured = { onChangeFavoured(hotkeyState.id, it) },
+                onChangeColorIndex = { onChangeColorIndex(hotkeyState.id, it) },
                 onEdit = dropUnlessResumed {
                     onEdit(hotkeyState.id)
                 },
@@ -211,7 +220,9 @@ private fun HotkeyItem(
     name: String,
     description: String,
     favoured: Boolean,
+    colorIndex: Int,
     onChangeFavoured: (Boolean) -> Unit,
+    onChangeColorIndex: (Int) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     index: Int,
@@ -289,7 +300,12 @@ private fun HotkeyItem(
             )
             Box {
                 var showMenu by remember { mutableStateOf(false) }
-                IconButton(onClick = { showMenu = true }) {
+                // 菜单页面：main = 主菜单（编辑/配色/删除），color = 颜色选择子菜单
+                var menuPage by remember { mutableStateOf(MenuPage.Main) }
+                IconButton(onClick = {
+                    menuPage = MenuPage.Main
+                    showMenu = true
+                }) {
                     Icon(
                         painterResource(R.drawable.ic_more_vert),
                         stringResource(R.string.hotkey_actions_menu_description),
@@ -297,22 +313,63 @@ private fun HotkeyItem(
                 }
                 DropdownMenu(
                     expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+                    onDismissRequest = {
+                        showMenu = false
+                        menuPage = MenuPage.Main
+                    }
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.edit)) },
-                        onClick = {
-                            showMenu = false
-                            onEdit()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.delete)) },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        },
-                    )
+                    when (menuPage) {
+                        MenuPage.Main -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.edit)) },
+                                onClick = {
+                                    showMenu = false
+                                    onEdit()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.hotkey_color_title)) },
+                                onClick = {
+                                    // 保持菜单打开，只切换内容为颜色列表
+                                    menuPage = MenuPage.Color
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete)) },
+                                onClick = {
+                                    showMenu = false
+                                    onDelete()
+                                },
+                            )
+                        }
+                        MenuPage.Color -> {
+                            val entries = listOf(
+                                Hotkey.COLOR_INDEX_AUTO to R.string.hotkey_color_auto,
+                                0 to R.string.hotkey_color_green,
+                                1 to R.string.hotkey_color_yellow,
+                                2 to R.string.hotkey_color_pink,
+                                3 to R.string.hotkey_color_purple,
+                                4 to R.string.hotkey_color_gray,
+                                5 to R.string.hotkey_color_blue,
+                            )
+                            entries.forEach { (value, textResId) ->
+                                val isSelected = colorIndex == value
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(textResId),
+                                            fontWeight = if (isSelected) FontWeight.Bold else null,
+                                        )
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        menuPage = MenuPage.Main
+                                        onChangeColorIndex(value)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -326,7 +383,9 @@ private fun CheckedItemPreview() {
         name = "Checked",
         description = "desc",
         favoured = true,
+        colorIndex = Hotkey.COLOR_INDEX_AUTO,
         onChangeFavoured = {},
+        onChangeColorIndex = {},
         onEdit = {},
         onDelete = {},
         index = 1,
@@ -342,7 +401,9 @@ private fun UncheckedItemPreview() {
         name = "Unchecked",
         description = "desc",
         favoured = false,
+        colorIndex = Hotkey.COLOR_INDEX_AUTO,
         onChangeFavoured = {},
+        onChangeColorIndex = {},
         onEdit = {},
         onDelete = {},
         index = 2,

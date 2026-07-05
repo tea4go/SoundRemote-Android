@@ -26,6 +26,9 @@ data class Hotkey(
     // appear below.
     @ColumnInfo(name = COLUMN_ORDER, defaultValue = "$ORDER_DEFAULT_VALUE")
     var order: Int,
+    // 主界面配色索引。-1 表示"跟随位置轮询 6 色调色板"；0..5 分别对应固定颜色。
+    @ColumnInfo(name = COLUMN_COLOR_INDEX, defaultValue = "$COLOR_INDEX_AUTO")
+    var colorIndex: Int = COLOR_INDEX_AUTO,
 ) {
     /**
      * Creates [Hotkey]
@@ -79,7 +82,9 @@ data class Hotkey(
         const val COLUMN_NAME = "name"
         const val COLUMN_FAVOURED = "favoured"
         const val COLUMN_ORDER = "display_order"
+        const val COLUMN_COLOR_INDEX = "color_index"
         const val ORDER_DEFAULT_VALUE = 0
+        const val COLOR_INDEX_AUTO = -1
     }
 }
 
@@ -92,6 +97,8 @@ data class HotkeyInfo(
     var mods: Mods,
     @ColumnInfo(name = Hotkey.COLUMN_NAME)
     var name: String,
+    @ColumnInfo(name = Hotkey.COLUMN_COLOR_INDEX)
+    var colorIndex: Int = Hotkey.COLOR_INDEX_AUTO,
 )
 
 data class HotkeyOrder(

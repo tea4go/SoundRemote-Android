@@ -37,6 +37,10 @@ class UserHotkeyRepository(
         hotkeyDao.changeFavoured(id, favoured)
     }
 
+    override suspend fun changeColorIndex(id: Int, colorIndex: Int) = withContext(dispatcher) {
+        hotkeyDao.changeColorIndex(id, colorIndex)
+    }
+
     override fun getFavouredOrdered(favoured: Boolean): Flow<List<HotkeyInfo>> =
         hotkeyDao.getFavouredOrdered(favoured)
 

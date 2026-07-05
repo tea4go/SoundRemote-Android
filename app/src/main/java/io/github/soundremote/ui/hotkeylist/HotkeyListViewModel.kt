@@ -18,7 +18,8 @@ data class HotkeyUIState(
     val id: Int,
     val name: String,
     val description: HotkeyDescription,
-    val favoured: Boolean
+    val favoured: Boolean,
+    val colorIndex: Int,
 )
 
 data class HotkeyListUIState(
@@ -36,7 +37,8 @@ class HotkeyListViewModel @Inject constructor(
                     hotkey.id,
                     hotkey.name,
                     description = generateDescription(hotkey),
-                    favoured = hotkey.isFavoured
+                    favoured = hotkey.isFavoured,
+                    colorIndex = hotkey.colorIndex,
                 )
             }
             HotkeyListUIState(hotkeyUIStates)
@@ -66,6 +68,12 @@ class HotkeyListViewModel @Inject constructor(
     fun changeFavoured(hotkeyId: Int, favoured: Boolean) {
         viewModelScope.launch {
             hotkeyRepository.changeFavoured(hotkeyId, favoured)
+        }
+    }
+
+    fun changeColorIndex(hotkeyId: Int, colorIndex: Int) {
+        viewModelScope.launch {
+            hotkeyRepository.changeColorIndex(hotkeyId, colorIndex)
         }
     }
 }
