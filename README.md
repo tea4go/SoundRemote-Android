@@ -1,5 +1,18 @@
 # SoundRemote android client
 
+> **本仓库为 fork 版本**
+> Fork 自 [SoundRemote/client-android](https://github.com/SoundRemote/client-android)（作者 Aleksandr Shipovskii，GPL v3）。
+> 本 fork 由 [tea4go](https://github.com/tea4go) 于 2026 年起进行中文本地化与功能增强，遵循相同的 **GNU GPL v3** 协议。
+>
+> 主要改动概览：
+> - 完整中文本地化（`values-zh-rCN`），应用内可实时切换 中文 / English / 跟随系统
+> - 主界面 UI 重构：IP 输入框布局优化、快捷键分组配色（6 色调板，可按热键单独选色）、分隔线、字体加大加粗
+> - 设置项拆分为"值 + 帮助提示"两级显示，帮助信息更接近设计意图
+> - 快捷键名称长度限制（≈12 字母或 6 汉字）
+> - Windows PowerShell 构建脚本适配（`jvms` 装 JDK 17、Gradle 直接构建、去除 Ionic/fastlane 依赖）
+>
+> 原项目主页：https://github.com/SoundRemote/client-android
+
 An Android app that, when paired up
 with [SoundRemote server](https://github.com/SoundRemote/server-windows), allows to:
 

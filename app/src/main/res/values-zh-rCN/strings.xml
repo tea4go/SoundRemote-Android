@@ -104,6 +104,8 @@
     <!--About-->
     <string name="about_title_template">关于 %s</string>
     <string name="about_copyright">© 2025 Aleksandr Shipovskii</string>
+    <string name="about_fork_notice">中文本地化与功能增强 © 2026 tea4go。\nFork 自 SoundRemote/client-android。</string>
+    <string name="about_fork_homepage">Fork 主页</string>
     <string name="show_license">许可证</string>
     <string name="open_homepage">主页</string>
 

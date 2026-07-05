@@ -97,6 +97,24 @@ internal fun AboutScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = paddingMod
             )
+            // Fork 版本贡献者信息（GPL v3 Section 5a 要求标记修改）
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = paddingMod
+            ) {
+                Text(
+                    text = stringResource(R.string.about_fork_notice),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = { openUrl("https://github.com/tea4go/SoundRemote-Android", context) },
+                ) {
+                    Text(stringResource(R.string.about_fork_homepage))
+                }
+            }
             val loadLicense: (String) -> Unit = { fileName ->
                 if (fileName != licenseFile) {
                     licenseText = ""
