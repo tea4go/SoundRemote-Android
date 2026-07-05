@@ -243,6 +243,7 @@ fun HomeScreen(
                     onDisconnect = onDisconnect,
                 )
             }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 5.dp))
             LazyColumn(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
