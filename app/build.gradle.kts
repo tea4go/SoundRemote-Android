@@ -24,7 +24,9 @@ android {
     namespace = "io.github.soundremote"
     compileSdk = 37
     defaultConfig {
-        applicationId = "io.github.soundremote"
+        // Fork 版专用 applicationId，与上游 io.github.soundremote 隔离，
+        // 避免和 F-Droid 上原版冲突；namespace 保留原值以免全量重命名源码包
+        applicationId = "io.github.tea4go.soundremote"
         minSdk = 23
         targetSdk = 36
         versionCode = 13
