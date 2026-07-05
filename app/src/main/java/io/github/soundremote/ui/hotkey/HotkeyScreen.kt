@@ -397,7 +397,9 @@ private fun NameEdit(
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = onChange,
+        // 显示宽度限制：汉字 = 2，其他 = 1，总 ≤ 12（约 12 字母 或 6 汉字）。
+        // 超长时截断到限制内再回传，避免出现"能输入但超限"的中间态。
+        onValueChange = { newValue -> onChange(newValue.truncateByDisplayWidth(NAME_MAX_WIDTH)) },
         modifier = modifier.then(sharedMod),
         label = { Text(stringResource(R.string.hotkey_name_edit_label)) },
         placeholder = { Text(stringResource(R.string.hotkey_name_edit_placeholder)) },
@@ -413,6 +415,37 @@ private fun NameEdit(
         },
         singleLine = true,
     )
+}
+
+// 名称最大显示宽度：单字节字符按 1 计，CJK 汉字按 2 计
+private const val NAME_MAX_WIDTH = 12
+
+/** 判断是否为需要按 2 个宽度计的东亚宽字符（涵盖 CJK 统一表意文字及扩展、全角标点等）。 */
+private fun Char.isWide(): Boolean {
+    val code = code
+    return (code in 0x1100..0x115F) ||      // 韩文字母
+        (code in 0x2E80..0x9FFF) ||         // CJK 部首、统一表意等主区
+        (code in 0xA000..0xA4CF) ||         // 彝文
+        (code in 0xAC00..0xD7A3) ||         // 韩文音节
+        (code in 0xF900..0xFAFF) ||         // CJK 兼容
+        (code in 0xFE30..0xFE4F) ||         // CJK 兼容形式
+        (code in 0xFF00..0xFF60) ||         // 全角 ASCII
+        (code in 0xFFE0..0xFFE6)            // 全角货币符号等
+}
+
+private fun String.displayWidth(): Int = sumOf { if (it.isWide()) 2 else 1 }
+
+private fun String.truncateByDisplayWidth(maxWidth: Int): String {
+    if (displayWidth() <= maxWidth) return this
+    var width = 0
+    val sb = StringBuilder()
+    for (ch in this) {
+        val w = if (ch.isWide()) 2 else 1
+        if (width + w > maxWidth) break
+        sb.append(ch)
+        width += w
+    }
+    return sb.toString()
 }
 
 @Preview(showBackground = true)
