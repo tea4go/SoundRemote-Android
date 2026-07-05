@@ -18,6 +18,9 @@ interface PreferencesRepository {
     /** 应用语言：见 [io.github.soundremote.util.AppLanguage]（AUTO/ZH/EN） */
     val languageFlow: Flow<String>
 
+    /** 更新源：见 [io.github.soundremote.util.UpdateSource]（gitee/github） */
+    val updateSourceFlow: Flow<String>
+
     suspend fun setServerAddress(serverAddress: String)
 
     suspend fun getServerAddress(): String
@@ -41,4 +44,8 @@ interface PreferencesRepository {
     suspend fun setLanguage(value: String)
 
     suspend fun getLanguage(): String
+
+    suspend fun setUpdateSource(value: String)
+
+    suspend fun getUpdateSource(): String
 }

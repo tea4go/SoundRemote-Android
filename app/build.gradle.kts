@@ -29,7 +29,7 @@ android {
         applicationId = "io.github.tea4go.soundremote"
         minSdk = 23
         targetSdk = 36
-        versionCode = 13
+        versionCode = 14
         versionName = "0.5.0"
         testInstrumentationRunner = "io.github.soundremote.CustomTestRunner"
     }

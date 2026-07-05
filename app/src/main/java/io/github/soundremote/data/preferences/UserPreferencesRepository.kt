@@ -34,6 +34,7 @@ private const val KEY_SERVER_ADDRESSES = "server_addresses"
 private const val KEY_AUDIO_COMPRESSION = "audio_compression"
 private const val KEY_IGNORE_AUDIO_FOCUS = "ignore_audio_focus"
 private const val KEY_LANGUAGE = "language"
+private const val KEY_UPDATE_SOURCE = "update_source"
 
 private const val SERVER_ADDRESSES_DELIMITER = ';'
 private const val SERVER_ADDRESSES_LIMIT = 5
@@ -50,6 +51,7 @@ class UserPreferencesRepository @Inject constructor(
         val AUDIO_COMPRESSION = intPreferencesKey(KEY_AUDIO_COMPRESSION)
         val IGNORE_AUDIO_FOCUS = booleanPreferencesKey(KEY_IGNORE_AUDIO_FOCUS)
         val LANGUAGE = stringPreferencesKey(KEY_LANGUAGE)
+        val UPDATE_SOURCE = stringPreferencesKey(KEY_UPDATE_SOURCE)
     }
 
     private val preferencesFlow = dataStore.data
@@ -89,6 +91,10 @@ class UserPreferencesRepository @Inject constructor(
 
     override val languageFlow: Flow<String> = preferencesFlow
         .map { preferences -> preferences[PreferencesKeys.LANGUAGE] ?: "" }
+        .distinctUntilChanged()
+
+    override val updateSourceFlow: Flow<String> = preferencesFlow
+        .map { preferences -> preferences[PreferencesKeys.UPDATE_SOURCE] ?: "gitee" }
         .distinctUntilChanged()
 
     override suspend fun setServerAddress(serverAddress: String) {
@@ -153,4 +159,12 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     override suspend fun getLanguage(): String = languageFlow.first()
+
+    override suspend fun setUpdateSource(value: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.UPDATE_SOURCE] = value
+        }
+    }
+
+    override suspend fun getUpdateSource(): String = updateSourceFlow.first()
 }

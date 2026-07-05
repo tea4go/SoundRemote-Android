@@ -37,6 +37,22 @@
     <string name="action_about">О приложении</string>
     <string name="action_edit_hotkeys">Редактировать сочетания клавиш</string>
     <string name="action_events">События</string>
+    <string name="action_check_update" translatable="false">Check for updates</string>
+
+    <!--Update (untranslated: fallback to English)-->
+    <string name="update_checking" translatable="false">Checking for updates…</string>
+    <string name="update_none_title" translatable="false">No updates</string>
+    <string name="update_none_message" translatable="false">You are running the latest version (%1$s).</string>
+    <string name="update_available_title" translatable="false">Update available</string>
+    <string name="update_available_message" translatable="false">New version %1$s is available.\n\nCurrent version: %2$s\n\nRelease notes:\n%3$s</string>
+    <string name="update_download" translatable="false">Update now</string>
+    <string name="update_later" translatable="false">Later</string>
+    <string name="update_downloading" translatable="false">Downloading…</string>
+    <string name="update_download_failed" translatable="false">Download failed. Please check the network and try again.</string>
+    <string name="update_check_failed" translatable="false">Update check failed. Please check the network.</string>
+    <string name="pref_update_source_title" translatable="false">Update source</string>
+    <string name="pref_update_source_gitee" translatable="false">Gitee (China)</string>
+    <string name="pref_update_source_github" translatable="false">GitHub</string>
     <string name="action_recent_servers">Показать последние серверы</string>
     <string name="recent_servers_title">Последние серверы</string>
     <string name="action_mute_app">Отключить звук приложения</string>

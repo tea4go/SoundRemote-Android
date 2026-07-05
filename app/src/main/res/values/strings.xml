@@ -43,6 +43,22 @@
     <string name="action_about">About</string>
     <string name="action_edit_hotkeys">Edit hotkeys</string>
     <string name="action_events">Events</string>
+    <string name="action_check_update">Check for updates</string>
+
+    <!--Update-->
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_none_title">No updates</string>
+    <string name="update_none_message">You are running the latest version (%1$s).</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_message">New version %1$s is available.\n\nCurrent version: %2$s\n\nRelease notes:\n%3$s</string>
+    <string name="update_download">Update now</string>
+    <string name="update_later">Later</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_download_failed">Download failed. Please check the network and try again.</string>
+    <string name="update_check_failed">Update check failed. Please check the network.</string>
+    <string name="pref_update_source_title">Update source</string>
+    <string name="pref_update_source_gitee">Gitee (China)</string>
+    <string name="pref_update_source_github">GitHub</string>
     <string name="action_recent_servers">Show recent servers</string>
     <string name="recent_servers_title">Recent servers</string>
     <string name="action_mute_app">Mute application</string>

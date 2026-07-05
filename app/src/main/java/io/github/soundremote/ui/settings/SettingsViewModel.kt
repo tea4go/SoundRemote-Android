@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.soundremote.data.preferences.PreferencesRepository
 import io.github.soundremote.util.AppLanguage
+import io.github.soundremote.util.UpdateSource
 import io.github.soundremote.util.applyAppLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,13 +21,15 @@ class SettingsViewModel @Inject constructor(
     val settings: StateFlow<SettingsUIState> = combine(
         preferencesRepository.settingsScreenPreferencesFlow,
         preferencesRepository.languageFlow,
-    ) { prefs, languageTag ->
+        preferencesRepository.updateSourceFlow,
+    ) { prefs, languageTag, updateSourceTag ->
         SettingsUIState(
             serverPort = prefs.serverPort,
             clientPort = prefs.clientPort,
             audioCompression = prefs.audioCompression,
             ignoreAudioFocus = prefs.ignoreAudioFocus,
             language = AppLanguage.fromTag(languageTag),
+            updateSource = UpdateSource.fromTag(updateSourceTag),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -57,6 +60,10 @@ class SettingsViewModel @Inject constructor(
             applyAppLanguage(value)
         }
     }
+
+    fun setUpdateSource(value: UpdateSource) {
+        viewModelScope.launch { preferencesRepository.setUpdateSource(value.tag) }
+    }
 }
 
 data class SettingsUIState(
@@ -65,4 +72,5 @@ data class SettingsUIState(
     val audioCompression: Int = 0,
     val ignoreAudioFocus: Boolean = false,
     val language: AppLanguage = AppLanguage.AUTO,
+    val updateSource: UpdateSource = UpdateSource.GITEE,
 )

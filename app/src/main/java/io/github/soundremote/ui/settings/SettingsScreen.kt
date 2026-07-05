@@ -39,6 +39,7 @@ import io.github.soundremote.util.AppLanguage
 import io.github.soundremote.util.DEFAULT_CLIENT_PORT
 import io.github.soundremote.util.DEFAULT_SERVER_PORT
 import io.github.soundremote.util.Net
+import io.github.soundremote.util.UpdateSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,8 @@ internal fun SettingsScreen(
     onSetAudioCompression: (Int) -> Unit,
     onSetIgnoreAudioFocus: (Boolean) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
+    onSetUpdateSource: (UpdateSource) -> Unit,
+    onCheckUpdate: () -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -62,6 +65,10 @@ internal fun SettingsScreen(
     val languageOptions = remember { languageOptions() }
     val languageSummaryId = remember(settings.language) {
         languageOptions.find { it.value == settings.language }?.textStringId
+    }
+    val updateSourceOptions = remember { updateSourceOptions() }
+    val updateSourceSummaryId = remember(settings.updateSource) {
+        updateSourceOptions.find { it.value == settings.updateSource }?.textStringId
     }
 
     Column(modifier) {
@@ -82,6 +89,18 @@ internal fun SettingsScreen(
                 options = languageOptions,
                 selectedValue = settings.language,
                 onSelect = onSetLanguage,
+            )
+            SelectPreference(
+                title = stringResource(R.string.pref_update_source_title),
+                summary = if (updateSourceSummaryId == null) "" else stringResource(updateSourceSummaryId),
+                options = updateSourceOptions,
+                selectedValue = settings.updateSource,
+                onSelect = onSetUpdateSource,
+            )
+            PreferenceItem(
+                title = stringResource(R.string.action_check_update),
+                summary = stringResource(R.string.app_name) + " " + io.github.soundremote.BuildConfig.VERSION_NAME,
+                onClick = onCheckUpdate,
             )
             SelectPreference(
                 title = stringResource(R.string.pref_compression_title),
@@ -154,6 +173,11 @@ private fun languageOptions(): List<SelectableOption<AppLanguage>> = listOf(
     SelectableOption(AppLanguage.EN, R.string.pref_language_en),
 )
 
+private fun updateSourceOptions(): List<SelectableOption<UpdateSource>> = listOf(
+    SelectableOption(UpdateSource.GITEE, R.string.pref_update_source_gitee),
+    SelectableOption(UpdateSource.GITHUB, R.string.pref_update_source_github),
+)
+
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO, name = "Light")
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark")
 @Preview(
@@ -172,6 +196,8 @@ private fun SettingsScreenPreview() {
             onSetAudioCompression = {},
             onSetIgnoreAudioFocus = {},
             onSetLanguage = {},
+            onSetUpdateSource = {},
+            onCheckUpdate = {},
             onNavigateUp = {},
         )
     }
