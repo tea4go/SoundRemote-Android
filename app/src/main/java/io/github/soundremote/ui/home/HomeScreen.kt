@@ -258,8 +258,7 @@ fun HomeScreen(
                         onLongClick = dropUnlessResumed {
                             onNavigateToEditHotkey(hotkey.id)
                         },
-                        contentColor = palette.content,
-                        titleColor = palette.title,
+                        backgroundColor = palette.content,
                     )
                 }
             }
@@ -440,30 +439,17 @@ private fun HotkeyItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    contentColor: Color = Color.Transparent,
-    titleColor: Color = Color.Transparent,
+    backgroundColor: Color = Color.Transparent,
 ) {
-    // 布局：整行 content 底色；名字所在的顶栏用 title 底色（撑满宽度、稍深）；
-    // 描述文字位于下方，继承 content 底色。
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(contentColor)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .background(backgroundColor)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(titleColor)
-                .padding(horizontal = 16.dp, vertical = 6.dp)
-        ) {
-            ListItemHeadline(text = name)
-        }
-        Box(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-        ) {
-            ListItemSupport(text = description)
-        }
+        ListItemHeadline(text = name)
+        ListItemSupport(text = description)
     }
 }
 
