@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-rem SoundRemote Android 构建/发布工具入口。
-rem - 直接双击：显示菜单
-rem - 命令行带参数：透传给 build_android_bywin.ps1（例如 run_win.bat -Build）
+rem SoundRemote Android build/publish tool entry.
+rem - Double-click: show menu
+rem - Command line with args: pass through to build_android_bywin.ps1 (e.g. run_win.bat -Build)
 
 set "SCRIPT=.\scripts\windows\build_android_bywin.ps1"
 
@@ -15,17 +15,17 @@ if not "%~1"=="" (
 :menu
 cls
 echo ================================================
-echo   SoundRemote Android - 构建 / 发布工具
+echo   SoundRemote Android - Build / Publish Tool
 echo ================================================
 echo.
-echo   [1] 检查构建环境（-Check）
-echo   [2] 构建 Release APK / AAB（-Build）
-echo   [3] 发布到 GitHub Release
-echo   [4] 发布到 Gitee Release
-echo   [5] 显示帮助（-Help）
-echo   [0] 退出
+echo   [1] Check build environment (-Check)
+echo   [2] Build Release APK / AAB (-Build)
+echo   [3] Publish to GitHub Release
+echo   [4] Publish to Gitee Release
+echo   [5] Show help (-Help)
+echo   [0] Exit
 echo.
-set /p "choice=请选择: "
+set /p "choice=Select: "
 
 if "%choice%"=="1" goto check
 if "%choice%"=="2" goto build
