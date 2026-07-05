@@ -263,6 +263,7 @@ fun HomeScreen(
                     )
                 }
             }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 5.dp))
             MediaBar(onSendKey)
         }
     }
