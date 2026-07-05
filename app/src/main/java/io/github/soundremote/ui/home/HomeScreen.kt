@@ -5,10 +5,12 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,7 +41,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
@@ -62,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -259,6 +263,7 @@ private fun cleanAddressInput(newValue: TextFieldValue, oldValue: TextFieldValue
     return null
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddressEdit(
     address: TextFieldValue,
@@ -268,32 +273,66 @@ private fun AddressEdit(
     modifier: Modifier = Modifier
 ) {
     var showRecentServers by rememberSaveable { mutableStateOf(false) }
-    OutlinedTextField(
+    val interactionSource = remember { MutableInteractionSource() }
+    val enabled = true
+    val singleLine = true
+    // 用 BasicTextField + OutlinedTextFieldDefaults.DecorationBox 自组装：
+    // Material 3 顶层 OutlinedTextField 强制 56dp 最小高度，这里用 DecorationBox 把
+    // contentPadding 上下压到 4dp，让输入框整体更矮（约 32dp 内容 + 边框）。
+    BasicTextField(
         value = address,
         onValueChange = onChange,
-        placeholder = { Text(stringResource(R.string.server_address)) },
-        textStyle = LocalTextStyle.current.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize),
-        singleLine = true,
+        textStyle = LocalTextStyle.current.copy(
+            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+            color = LocalContentColor.current,
+        ),
+        singleLine = singleLine,
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Go,
             keyboardType = KeyboardType.Number,
         ),
         keyboardActions = KeyboardActions(onAny = { onConnect() }),
-        trailingIcon = if (recentAddresses.isEmpty()) {
-            null
-        } else {
-            {
-                Icon(
-                    painterResource(R.drawable.ic_arrow_drop_down),
-                    stringResource(R.string.action_recent_servers),
-                    Modifier
-                        .size(24.dp)
-                        .rotate(if (showRecentServers) 180f else 0f)
-                        .clickable { showRecentServers = !showRecentServers },
-                )
-            }
-        },
-        modifier = modifier
+        interactionSource = interactionSource,
+        modifier = modifier,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = address.text,
+                innerTextField = innerTextField,
+                enabled = enabled,
+                singleLine = singleLine,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interactionSource,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.server_address),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                },
+                trailingIcon = if (recentAddresses.isEmpty()) {
+                    null
+                } else {
+                    {
+                        Icon(
+                            painterResource(R.drawable.ic_arrow_drop_down),
+                            stringResource(R.string.action_recent_servers),
+                            Modifier
+                                .size(24.dp)
+                                .rotate(if (showRecentServers) 180f else 0f)
+                                .clickable { showRecentServers = !showRecentServers },
+                        )
+                    }
+                },
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = enabled,
+                        isError = false,
+                        interactionSource = interactionSource,
+                    )
+                },
+                // 关键：默认 vertical padding 是 16dp（无 label 时也是 16），这里压到 4dp
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            )
+        }
     )
     if (showRecentServers) {
         AlertDialog(
