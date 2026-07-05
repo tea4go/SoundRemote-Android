@@ -3,10 +3,10 @@ package io.github.soundremote.ui.home
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -57,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
@@ -80,10 +81,21 @@ import io.github.soundremote.util.Key
 import io.github.soundremote.util.TestTag
 
 private val listItemPadding = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-private val hotkeyItemModifier = Modifier
-    .fillMaxWidth()
-    .height(72.dp)
-    .then(listItemPadding)
+
+/**
+ * 快捷键行的配色调板：整行底色 content + 顶部标题栏底色 title。
+ * 参考 Delphi 项目里的 6 色循环方案（绿/黄/粉/紫/灰/蓝），按行 index 取模轮换。
+ */
+private data class HotkeyPalette(val content: Color, val title: Color)
+
+private val hotkeyPalettes = listOf(
+    HotkeyPalette(Color(0xFFC5FCAA), Color(0xFFA6FA91)),  // 绿
+    HotkeyPalette(Color(0xFFFCF3A7), Color(0xFFFAE961)),  // 黄
+    HotkeyPalette(Color(0xFFF5C9C8), Color(0xFFF2B5B4)),  // 粉
+    HotkeyPalette(Color(0xFFBACAFB), Color(0xFFA1B7F8)),  // 紫
+    HotkeyPalette(Color(0xFFEEEEEE), Color(0xFFDADADA)),  // 灰
+    HotkeyPalette(Color(0xFFBEF2FD), Color(0xFFA5EEFD)),  // 蓝
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,7 +249,8 @@ fun HomeScreen(
                     // fill = false 允许在空间不足时收缩到 0，把空间让给上面的输入框
                     .weight(1f, fill = false),
             ) {
-                items(items = uiState.hotkeys, key = { it.id }) { hotkey ->
+                itemsIndexed(items = uiState.hotkeys, key = { _, item -> item.id }) { idx, hotkey ->
+                    val palette = hotkeyPalettes[idx % hotkeyPalettes.size]
                     HotkeyItem(
                         name = hotkey.name,
                         description = hotkey.description.asString(),
@@ -245,6 +258,8 @@ fun HomeScreen(
                         onLongClick = dropUnlessResumed {
                             onNavigateToEditHotkey(hotkey.id)
                         },
+                        contentColor = palette.content,
+                        titleColor = palette.title,
                     )
                 }
             }
@@ -425,15 +440,30 @@ private fun HotkeyItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentColor: Color = Color.Transparent,
+    titleColor: Color = Color.Transparent,
 ) {
+    // 布局：整行 content 底色；名字所在的顶栏用 title 底色（撑满宽度、稍深）；
+    // 描述文字位于下方，继承 content 底色。
     Column(
         modifier = modifier
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .then(hotkeyItemModifier),
-        verticalArrangement = Arrangement.Center,
+            .fillMaxWidth()
+            .background(contentColor)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        ListItemHeadline(text = name)
-        ListItemSupport(text = description)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(titleColor)
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            ListItemHeadline(text = name)
+        }
+        Box(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            ListItemSupport(text = description)
+        }
     }
 }
 
