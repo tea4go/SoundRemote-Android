@@ -148,6 +148,138 @@ function Invoke-SdkManager {
   return $true
 }
 
+<#
+.SYNOPSIS
+  读取 cmdline-tools\latest\source.properties 的 Pkg.Revision 主版本号。
+.OUTPUTS
+  [int] 主版本号（如 12、21）；读不到返回 0。
+#>
+function Get-CmdlineToolsMajor {
+  param([string]$AndroidHome)
+  $props = Join-Path $AndroidHome 'cmdline-tools\latest\source.properties'
+  if (-not (Test-Path -LiteralPath $props)) { return 0 }
+  foreach ($line in Get-Content -LiteralPath $props) {
+    if ($line -match '^Pkg\.Revision\s*=\s*(\d+)') { return [int]$Matches[1] }
+  }
+  return 0
+}
+
+<#
+.SYNOPSIS
+  若当前 cmdline-tools 版本过老（< 阈值），通过 sdkmanager 自升级到 latest。
+.DESCRIPTION
+  Google 从 SDK XML v4 起，旧版 cmdline-tools（<= 12）无法识别 Android 36+ 的 platform 包。
+  升级流程：
+  1) 用旧 sdkmanager 装 cmdline-tools;latest，它会解压到 cmdline-tools\latest-2\
+  2) 删除旧的 cmdline-tools\latest\，把 latest-2\ 改名为 latest\
+  3) 让调用方重新定位 sdkmanager
+.PARAMETER SdkManagerPath
+  当前 sdkmanager.bat 路径（旧版本）。
+.PARAMETER AndroidHome
+  SDK 根目录。
+.PARAMETER MinVersion
+  最低可接受主版本号，低于此值触发升级。
+.OUTPUTS
+  [bool] 升级完成或本已足够返回 true；失败返回 false。
+#>
+function Update-CmdlineToolsIfOld {
+  param(
+    [string]$SdkManagerPath,
+    [string]$AndroidHome,
+    [int]$MinVersion = 16
+  )
+  $ver = Get-CmdlineToolsMajor -AndroidHome $AndroidHome
+  if ($ver -ge $MinVersion) {
+    Write-Ok "cmdline-tools 版本 $ver 已足够（>= $MinVersion），跳过升级"
+    return $true
+  }
+
+  Write-Warn "cmdline-tools 主版本 $ver 过旧（< $MinVersion），尝试升级到 latest ..."
+  if (-not (Invoke-SdkManager -SdkManagerPath $SdkManagerPath -AndroidHome $AndroidHome -Packages @('cmdline-tools;latest'))) {
+    Write-Fail 'cmdline-tools 升级失败'
+    return $false
+  }
+
+  # sdkmanager 会把新版装到 cmdline-tools\latest-2\（因 latest 已占用），需要把它顶替过去
+  $latest  = Join-Path $AndroidHome 'cmdline-tools\latest'
+  $latest2 = Join-Path $AndroidHome 'cmdline-tools\latest-2'
+  if (Test-Path -LiteralPath $latest2) {
+    Remove-Item -LiteralPath $latest -Recurse -Force -ErrorAction SilentlyContinue
+    Move-Item -LiteralPath $latest2 -Destination $latest -Force
+    Write-Ok "已把新版 cmdline-tools 从 latest-2 顶替到 latest"
+  }
+  return $true
+}
+
+<#
+.SYNOPSIS
+  在磁盘上检查某个 platform api 是否已安装（兼容 android-<api> 和 android-<api>.0 命名）。
+.OUTPUTS
+  [string] 已装的目录名（如 android-37.0）；未装返回 $null。
+#>
+function Test-InstalledPlatform {
+  param([string]$AndroidHome, [int]$Api)
+  foreach ($name in @("android-$Api", "android-$Api.0")) {
+    if (Test-Path -LiteralPath (Join-Path $AndroidHome "platforms\$name")) {
+      return $name
+    }
+  }
+  return $null
+}
+
+<#
+.SYNOPSIS
+  智能安装 Android platform：先按新命名（android-<api>.0）尝试，失败再降级到旧命名。
+.NOTES
+  Google 从 API 36 开始，稳定 platform 命名过渡到 android-<major>.<minor>；
+  API 35 及以前仍是 android-<api>。已装则跳过。
+.OUTPUTS
+  [bool] 安装成功或已装返回 true。
+#>
+function Install-AndroidPlatform {
+  param([string]$SdkManagerPath, [string]$AndroidHome, [int]$Api)
+  $exist = Test-InstalledPlatform -AndroidHome $AndroidHome -Api $Api
+  if ($exist) {
+    Write-Ok "platform 已装：$exist"
+    return $true
+  }
+  # 新命名优先（API 37+），失败降级到无小数版
+  foreach ($name in @("android-$Api.0", "android-$Api")) {
+    Write-Host "  尝试安装 platforms;$name ..." -ForegroundColor Cyan
+    if (Invoke-SdkManager -SdkManagerPath $SdkManagerPath -AndroidHome $AndroidHome -Packages @("platforms;$name")) {
+      if (Test-Path -LiteralPath (Join-Path $AndroidHome "platforms\$name")) {
+        Write-Ok "platform 安装成功：$name"
+        return $true
+      }
+    }
+  }
+  Write-Fail "platforms;android-$Api 系列全部候选安装失败"
+  return $false
+}
+
+<#
+.SYNOPSIS
+  智能安装 Android build-tools：已装则跳过，否则装指定版本；主版本存在但 minor 不同也可接受。
+.OUTPUTS
+  [bool]
+#>
+function Install-AndroidBuildTools {
+  param([string]$SdkManagerPath, [string]$AndroidHome, [int]$Api)
+  $btDir = Join-Path $AndroidHome 'build-tools'
+  # 已存在同 major 版本即视为满足（如 API 37 匹配 37.x.x）
+  if (Test-Path -LiteralPath $btDir) {
+    $matched = Get-ChildItem -LiteralPath $btDir -Directory -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -match "^$Api\." } | Select-Object -First 1
+    if ($matched) {
+      Write-Ok "build-tools 已装：$($matched.Name)"
+      return $true
+    }
+  }
+  $pkg = "build-tools;$Api.0.0"
+  Write-Host "  尝试安装 $pkg ..." -ForegroundColor Cyan
+  return Invoke-SdkManager -SdkManagerPath $SdkManagerPath -AndroidHome $AndroidHome -Packages @($pkg)
+}
+
 Write-Host ""
 Write-Banner -Title 'Android SDK 自动安装脚本（Windows PowerShell）       ' -Color Cyan -Width 55
 Write-Host ""
@@ -187,42 +319,37 @@ $env:ANDROID_HOME = $androidHome
 
 Write-Host "[2/6] 检查 Java 环境" -ForegroundColor Cyan
 if (-not (Assert-Java17)) { exit 1 }
-
-Write-Host "[3/5] 准备安装的 Android SDK 组件" -ForegroundColor Cyan
 $api = Get-AndroidSdkApi
-$buildToolsVersion = "$api.0.0"
-$packages = @(
-  'platform-tools',
-  "platforms;android-$api",
-  "build-tools;$buildToolsVersion"
-)
-$sdkmanagerOnDisk = Join-Path $androidHome 'cmdline-tools\latest\bin\sdkmanager.bat'
-if (-not (Test-Path -LiteralPath $sdkmanagerOnDisk)) {
-  # 若当前 SDK 目录里还没有 cmdline-tools，则先让 sdkmanager 自己安装 cmdline-tools;latest
-  $packages = @('cmdline-tools;latest') + $packages
-}
+Write-Ok "项目 compileSdk = $api（读自 app\build.gradle.kts）"
 
-$latest2 = Join-Path $androidHome 'cmdline-tools\latest-2'
-if (Test-Path -LiteralPath $latest2) {
-  # 某些历史脚本/手工操作会留下 latest-2，可能干扰 Find-SdkManager/升级逻辑，直接清理
-  Write-Warn "检测到遗留目录 cmdline-tools\latest-2，正在清理 ..."
-  Remove-Item -LiteralPath $latest2 -Recurse -Force -ErrorAction SilentlyContinue
-  Write-Ok "已清理 cmdline-tools\latest-2"
-}
-
-foreach ($p in $packages) { Write-Host "    $p" }
-Write-Host ""
-
-Write-Host "[4/5] 安装 Android SDK 组件" -ForegroundColor Cyan
-if (-not (Invoke-SdkManager -SdkManagerPath $sdkmanager -AndroidHome $androidHome -Packages $packages)) {
+Write-Host "[3/6] 升级 cmdline-tools（如版本过旧）" -ForegroundColor Cyan
+if (-not (Update-CmdlineToolsIfOld -SdkManagerPath $sdkmanager -AndroidHome $androidHome)) { exit 1 }
+# 升级后重新定位 sdkmanager（可能路径没变，但确保拿到新版本）
+$sdkmanager = Find-SdkManager -PreferredRoot $androidHome
+if (-not $sdkmanager) {
+  Write-Fail "升级 cmdline-tools 后未找到 sdkmanager.bat"
   exit 1
 }
+Show-SdkManagerVersion $sdkmanager
+
+Write-Host "[4/6] 安装 platform-tools" -ForegroundColor Cyan
+if (Test-Path -LiteralPath (Join-Path $androidHome 'platform-tools\adb.exe')) {
+  Write-Ok "platform-tools 已装"
+} else {
+  if (-not (Invoke-SdkManager -SdkManagerPath $sdkmanager -AndroidHome $androidHome -Packages @('platform-tools'))) { exit 1 }
+}
+
+Write-Host "[5/6] 安装 platforms;android-$api（智能命名）" -ForegroundColor Cyan
+if (-not (Install-AndroidPlatform -SdkManagerPath $sdkmanager -AndroidHome $androidHome -Api ([int]$api))) { exit 1 }
+
+Write-Host "[6/6] 安装 build-tools;$api.x.x" -ForegroundColor Cyan
+if (-not (Install-AndroidBuildTools -SdkManagerPath $sdkmanager -AndroidHome $androidHome -Api ([int]$api))) { exit 1 }
 
 Write-Host ""
 Write-Ok "Android SDK 组件安装完成！"
 Write-Host ""
 
-Write-Host "[5/5] 配置环境变量" -ForegroundColor Cyan
+Write-Host "[配置] 环境变量" -ForegroundColor Cyan
 $platformTools = Join-Path $androidHome 'platform-tools'
 
 # 写入用户级环境变量（需要新开终端窗口才会影响新的 shell）
