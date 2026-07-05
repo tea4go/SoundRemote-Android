@@ -43,7 +43,7 @@ internal fun IntPreference(
     } else {
         val defaultValueText = stringResource(R.string.pref_default_value_template)
             .format(defaultValue)
-        "$defaultValueText\n$summary"
+        "$summary\n$defaultValueText"
     }
 
     PreferenceItem(
