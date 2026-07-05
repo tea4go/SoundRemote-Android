@@ -1,0 +1,22 @@
+# 将此文件复制为 scripts\local\android-signing.ps1，并填入本地密钥信息。
+# 本文件由 scripts\windows\build_android_bywin.ps1 以点源方式引入（PowerShell 语法）。
+# 请勿将真实的 android-signing.ps1 或任何密钥库密码提交到 git。
+
+$env:KEYSTORE_FILE_PASSWORD = "你的密钥库密码"
+
+# 版本号说明：versionName/versionCode 始终以 app\build.gradle.kts 为准
+#   （build_android 构建时 versionCode 自动 +1）。
+#   要手动设定版本，请用：scripts\windows\sync_version_bywin.ps1 -VersionName <名> -VersionCode <号>
+#   在此设 $env:BUILD_NUMBER / $env:VERSION_NUMBER 不会生效。
+
+# 可选覆盖项（keystore 路径与别名，默认值如下）：
+# $env:KEYSTORE_FILE_PATH = "$env:USERPROFILE\keystore\soundremote-keystore.jks"
+# $env:KEYSTORE_FILE_ALIAS = "soundremote"
+
+# 还没有密钥库？先创建默认密钥库：
+#   keytool -genkey -v -keystore "$env:USERPROFILE\keystore\soundremote-keystore.jks" `
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias soundremote
+
+# Gitee 发布令牌（仅 -Publish -Platform gitee 时需要）：
+# 获取令牌：https://gitee.com/personal_access_tokens
+# $env:GITEE_TOKEN = "你的 Gitee 私人令牌"
