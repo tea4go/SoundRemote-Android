@@ -81,6 +81,7 @@ room {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.ktx)  // For the predictive back gesture
+    implementation(libs.androidx.appcompat)  // For AppCompatDelegate.setApplicationLocales
     implementation(libs.bundles.androidx.lifeycle)
     implementation(libs.androidx.media3.session)
 // Compose

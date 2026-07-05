@@ -1,6 +1,7 @@
 <resources>
 
-    <style name="Theme.SoundRemote" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- 必须使用 AppCompat 主题，AppCompatActivity 会检查主题继承并在 API < 33 下应用语言切换 -->
+    <style name="Theme.SoundRemote" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/colorBackground</item>
     </style>
 

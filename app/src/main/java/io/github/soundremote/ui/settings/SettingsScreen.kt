@@ -35,6 +35,7 @@ import io.github.soundremote.R
 import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.NavigateUpButton
 import io.github.soundremote.ui.theme.SoundRemoteTheme
+import io.github.soundremote.util.AppLanguage
 import io.github.soundremote.util.DEFAULT_CLIENT_PORT
 import io.github.soundremote.util.DEFAULT_SERVER_PORT
 import io.github.soundremote.util.Net
@@ -47,6 +48,7 @@ internal fun SettingsScreen(
     onSetClientPort: (Int) -> Unit,
     onSetAudioCompression: (Int) -> Unit,
     onSetIgnoreAudioFocus: (Boolean) -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -56,6 +58,10 @@ internal fun SettingsScreen(
     }
     val compressionSummaryId = remember(settings.audioCompression) {
         compressionOptions.find { it.value == settings.audioCompression }?.textStringId
+    }
+    val languageOptions = remember { languageOptions() }
+    val languageSummaryId = remember(settings.language) {
+        languageOptions.find { it.value == settings.language }?.textStringId
     }
 
     Column(modifier) {
@@ -70,6 +76,13 @@ internal fun SettingsScreen(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState())
         ) {
+            SelectPreference(
+                title = stringResource(R.string.pref_language_title),
+                summary = if (languageSummaryId == null) "" else stringResource(languageSummaryId),
+                options = languageOptions,
+                selectedValue = settings.language,
+                onSelect = onSetLanguage,
+            )
             SelectPreference(
                 title = stringResource(R.string.pref_compression_title),
                 summary = if (compressionSummaryId == null) {
@@ -135,6 +148,12 @@ private fun compressionOptions(): List<SelectableOption<Int>> = listOf(
     SelectableOption(Net.COMPRESSION_320, R.string.compression_320),
 )
 
+private fun languageOptions(): List<SelectableOption<AppLanguage>> = listOf(
+    SelectableOption(AppLanguage.AUTO, R.string.pref_language_auto),
+    SelectableOption(AppLanguage.ZH, R.string.pref_language_zh),
+    SelectableOption(AppLanguage.EN, R.string.pref_language_en),
+)
+
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO, name = "Light")
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark")
 @Preview(
@@ -152,6 +171,7 @@ private fun SettingsScreenPreview() {
             onSetServerPort = {},
             onSetAudioCompression = {},
             onSetIgnoreAudioFocus = {},
+            onSetLanguage = {},
             onNavigateUp = {},
         )
     }

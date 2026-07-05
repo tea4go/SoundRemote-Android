@@ -27,6 +27,7 @@ fun NavGraphBuilder.settingsScreen(
             onSetClientPort = viewModel::setClientPort,
             onSetAudioCompression = viewModel::setAudioCompression,
             onSetIgnoreAudioFocus = viewModel::setIgnoreAudioFocus,
+            onSetLanguage = viewModel::setLanguage,
             onNavigateUp = onNavigateUp,
         )
     }

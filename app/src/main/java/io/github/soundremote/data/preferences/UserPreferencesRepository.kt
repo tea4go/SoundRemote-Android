@@ -33,6 +33,7 @@ private const val KEY_CLIENT_PORT = "client_port"
 private const val KEY_SERVER_ADDRESSES = "server_addresses"
 private const val KEY_AUDIO_COMPRESSION = "audio_compression"
 private const val KEY_IGNORE_AUDIO_FOCUS = "ignore_audio_focus"
+private const val KEY_LANGUAGE = "language"
 
 private const val SERVER_ADDRESSES_DELIMITER = ';'
 private const val SERVER_ADDRESSES_LIMIT = 5
@@ -48,6 +49,7 @@ class UserPreferencesRepository @Inject constructor(
         val CLIENT_PORT = intPreferencesKey(KEY_CLIENT_PORT)
         val AUDIO_COMPRESSION = intPreferencesKey(KEY_AUDIO_COMPRESSION)
         val IGNORE_AUDIO_FOCUS = booleanPreferencesKey(KEY_IGNORE_AUDIO_FOCUS)
+        val LANGUAGE = stringPreferencesKey(KEY_LANGUAGE)
     }
 
     private val preferencesFlow = dataStore.data
@@ -84,6 +86,10 @@ class UserPreferencesRepository @Inject constructor(
         .map { preferences ->
             preferences[PreferencesKeys.IGNORE_AUDIO_FOCUS] ?: DEFAULT_IGNORE_AUDIO_FOCUS
         }.distinctUntilChanged()
+
+    override val languageFlow: Flow<String> = preferencesFlow
+        .map { preferences -> preferences[PreferencesKeys.LANGUAGE] ?: "" }
+        .distinctUntilChanged()
 
     override suspend fun setServerAddress(serverAddress: String) {
         val current = LinkedHashSet(serverAddressesFlow.first())
@@ -139,4 +145,12 @@ class UserPreferencesRepository @Inject constructor(
 
     override suspend fun getIgnoreAudioFocus(): Boolean =
         settingsScreenPreferencesFlow.first().ignoreAudioFocus
+
+    override suspend fun setLanguage(value: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.LANGUAGE] = value
+        }
+    }
+
+    override suspend fun getLanguage(): String = languageFlow.first()
 }

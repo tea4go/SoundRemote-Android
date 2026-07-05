@@ -15,6 +15,9 @@ interface PreferencesRepository {
 
     val ignoreAudioFocusFlow: Flow<Boolean>
 
+    /** 应用语言：见 [io.github.soundremote.util.AppLanguage]（AUTO/ZH/EN） */
+    val languageFlow: Flow<String>
+
     suspend fun setServerAddress(serverAddress: String)
 
     suspend fun getServerAddress(): String
@@ -34,4 +37,8 @@ interface PreferencesRepository {
     suspend fun setIgnoreAudioFocus(value: Boolean)
 
     suspend fun getIgnoreAudioFocus(): Boolean
+
+    suspend fun setLanguage(value: String)
+
+    suspend fun getLanguage(): String
 }

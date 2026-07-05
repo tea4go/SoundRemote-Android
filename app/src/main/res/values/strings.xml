@@ -96,6 +96,10 @@
     <!--Settings-->
     <string name="settings_title">Settings</string>
     <string name="settings_advanced_title">Advanced</string>
+    <string name="pref_language_title">Language</string>
+    <string name="pref_language_auto">Follow system</string>
+    <string name="pref_language_zh">中文</string>
+    <string name="pref_language_en">English</string>
     <string name="pref_server_port_title">Server port</string>
     <string name="pref_client_port_title">Client port</string>
     <string name="pref_compression_title">Audio compression</string>

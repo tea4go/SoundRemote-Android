@@ -54,11 +54,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.soundremote.R
 import io.github.soundremote.data.Hotkey
-import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.ListItemSupport
 import io.github.soundremote.ui.components.NavigateUpButton
 import io.github.soundremote.ui.theme.resolveHotkeyPalette
@@ -277,7 +277,14 @@ private fun HotkeyItem(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.weight(1f)
             ) {
-                ListItemHeadline(name)
+                // 名称：加大到 20sp 并加粗，与主界面 HotkeyItem 保持一致
+                Text(
+                    text = name,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 ListItemSupport(description)
             }
             Icon(
