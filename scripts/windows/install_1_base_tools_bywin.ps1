@@ -815,11 +815,50 @@ function Test-Jdk17Tool {
 
 <#
 .SYNOPSIS
+  从 jvms ls 输出中查找已安装的 JDK 17 版本名。
+.OUTPUTS
+  [string] 完整版本名（如 openjdk-17.0.2）；未装返回 $null。
+#>
+function Get-JvmsInstalledJdk17 {
+  $out = Invoke-NativeText -FilePath 'jvms' -Arguments @('ls')
+  foreach ($line in $out) {
+    if ($line -match 'openjdk-17\.\d+\.\d+') {
+      return $Matches[0]
+    }
+  }
+  return $null
+}
+
+<#
+.SYNOPSIS
+  验证 %USERPROFILE%\jdk 指向的 java 是否为 17，是则提示可能需要重开终端。
+.OUTPUTS
+  [bool]
+#>
+function Test-JvmsCurrentJdk17 {
+  $sessionJdk = Join-Path $env:USERPROFILE 'jdk\bin\java.exe'
+  if (-not (Test-Path -LiteralPath $sessionJdk)) { return $false }
+  $line = (Invoke-NativeText -FilePath $sessionJdk -Arguments @('-version') | Select-Object -First 1)
+  if ($line -match '"17') {
+    Write-Ok "JDK 17 已就绪：$sessionJdk"
+    if ((Get-JavaMajorVersion) -ne 17) {
+      Write-Warn "当前 shell 的 java 可能仍指向旧版本，请重新打开终端后再构建"
+    }
+    return $true
+  }
+  return $false
+}
+
+<#
+.SYNOPSIS
   通过 jvms 安装并切换到 JDK 17。
 .OUTPUTS
   [bool]
 .NOTES
-  安装源使用华为镜像（jvms rls -t huawei 中的 openjdk-17.0.2）。
+  流程：
+  1) 当前 java 已是 17，直接返回
+  2) jvms 里已装 17，直接 use 切换（无需询问）
+  3) 都没有，询问用户是否下载安装 openjdk-17.0.2（huawei 镜像）
 #>
 function Install-Jdk17Tool {
   Write-Host ""
@@ -831,6 +870,20 @@ function Install-Jdk17Tool {
   if (-not (Test-JvmsTool)) {
     Write-Fail "缺少 jvms，请先安装 jvms（本脚本 -AddTools jvms）"
     return $false
+  }
+
+  # 若 jvms 里已装 JDK 17，直接切换（不询问、不重复下载）
+  $installed = Get-JvmsInstalledJdk17
+  if ($installed) {
+    Write-Ok "jvms 中已安装 $installed，直接切换 ..."
+    Invoke-NativeStream -Block { & jvms use $installed }
+    if ($LASTEXITCODE -ne 0) {
+      Write-Fail "jvms use $installed 失败"
+      return $false
+    }
+    if (Test-JvmsCurrentJdk17) { return $true }
+    Write-Warn "$installed 切换完成，但当前 shell 未检测到；请重新打开终端后再验证"
+    return $true
   }
 
   if (-not (Confirm-Install "通过 jvms 安装 JDK 17（openjdk-17.0.2）")) { return $false }
@@ -853,19 +906,7 @@ function Install-Jdk17Tool {
     return $false
   }
 
-  # jvms use 通过 junction 修改 %USERPROFILE%\jdk 指向，
-  # 但当前会话的 java.exe 可能还是老的（PATH 里其他 java 靠前）。
-  # 提示用户重开终端；同时验证 %USERPROFILE%\jdk\bin\java.exe 是否 17。
-  $sessionJdk = Join-Path $env:USERPROFILE 'jdk\bin\java.exe'
-  if (Test-Path -LiteralPath $sessionJdk) {
-    $line = (Invoke-NativeText -FilePath $sessionJdk -Arguments @('-version') | Select-Object -First 1)
-    if ($line -match '"17') {
-      Write-Ok "JDK 17 已就绪：$sessionJdk"
-      Write-Warn "当前 shell 的 java 可能仍指向旧版本，请重新打开终端后再构建"
-      return $true
-    }
-  }
-
+  if (Test-JvmsCurrentJdk17) { return $true }
   if (Test-Jdk17Tool) { return $true }
   Write-Warn "JDK 17 安装完成，但当前 shell 未检测到；请重新打开终端后再验证"
   return $false
