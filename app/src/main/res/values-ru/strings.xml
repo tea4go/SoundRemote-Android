@@ -81,6 +81,7 @@
     <string name="pref_ignore_focus_summary">Разрешить воспроизведение аудио одновременно с другими приложениями</string>
     <!--About-->
     <string name="about_title_template">О %s</string>
+    <string name="about_copyright">© 2025 Aleksandr Shipovskii</string>
     <string name="show_license">лицензия</string>
     <string name="open_homepage">сайт</string>
     <!--Compression-->

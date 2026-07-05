@@ -93,7 +93,7 @@ internal fun AboutScreen(
                 }
             }
             Text(
-                text = "© 2025 Aleksandr Shipovskii",
+                text = stringResource(R.string.about_copyright),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = paddingMod
             )

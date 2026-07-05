@@ -102,6 +102,7 @@
 
     <!--About-->
     <string name="about_title_template">About %s</string>
+    <string name="about_copyright">© 2025 Aleksandr Shipovskii</string>
     <string name="show_license">license</string>
     <string name="open_homepage">homepage</string>
 
