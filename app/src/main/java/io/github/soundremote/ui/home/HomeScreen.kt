@@ -115,15 +115,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    AddressEdit(
-                        address = address,
-                        recentAddresses = uiState.recentServersAddresses,
-                        onChange = onAddressChange,
-                        onConnect = { onConnect(address.text) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 16.dp)
-                    )
+                    Text(stringResource(R.string.app_name))
                 },
                 actions = {
                     ConnectButton(
@@ -212,6 +204,15 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
         ) {
+            AddressEdit(
+                address = address,
+                recentAddresses = uiState.recentServersAddresses,
+                onChange = onAddressChange,
+                onConnect = { onConnect(address.text) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
             LazyColumn(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -256,7 +257,6 @@ private fun AddressEdit(
         value = address,
         onValueChange = onChange,
         placeholder = { Text(stringResource(R.string.server_address)) },
-        // To prevent font size change when TextField is in TopAppBar
         textStyle = LocalTextStyle.current.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize),
         singleLine = true,
         keyboardOptions = KeyboardOptions(
@@ -279,8 +279,6 @@ private fun AddressEdit(
             }
         },
         modifier = modifier
-            // To prevent TextField size change when is in TopAppBar
-            .height(56.dp)
     )
     if (showRecentServers) {
         AlertDialog(
