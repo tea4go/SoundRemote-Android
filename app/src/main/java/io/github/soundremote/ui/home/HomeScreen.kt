@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -121,11 +122,6 @@ fun HomeScreen(
                     Text(stringResource(R.string.app_name))
                 },
                 actions = {
-                    ConnectButton(
-                        connectionState = uiState.connectionState,
-                        onConnect = { onConnect(address.text) },
-                        onDisconnect = onDisconnect,
-                    )
                     IconToggleButton(
                         checked = uiState.muted,
                         onCheckedChange = { onSetMuted(it) }
@@ -211,17 +207,26 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
         ) {
-            AddressEdit(
-                address = address,
-                recentAddresses = uiState.recentServersAddresses,
-                onChange = onAddressChange,
-                onConnect = { onConnect(address.text) },
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // unbounded 让输入框拒绝被父 Column 挤压（横屏 + IME 时空间不够时保持自身内在高度）
                     .wrapContentHeight(unbounded = true)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            ) {
+                AddressEdit(
+                    address = address,
+                    recentAddresses = uiState.recentServersAddresses,
+                    onChange = onAddressChange,
+                    onConnect = { onConnect(address.text) },
+                    modifier = Modifier.weight(1f)
+                )
+                ConnectButton(
+                    connectionState = uiState.connectionState,
+                    onConnect = { onConnect(address.text) },
+                    onDisconnect = onDisconnect,
+                )
+            }
             LazyColumn(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
