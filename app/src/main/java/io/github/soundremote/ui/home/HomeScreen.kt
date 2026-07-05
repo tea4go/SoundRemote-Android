@@ -212,7 +212,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(unbounded = true)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp, vertical = 5.dp)
             ) {
                 AddressEdit(
                     address = address,
