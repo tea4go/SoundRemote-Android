@@ -8,13 +8,16 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -182,17 +185,21 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = dropUnlessResumed {
-                    onNavigateToHotkeyList()
-                },
-                modifier = Modifier
-                    .padding(bottom = 48.dp),
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_edit_filled),
-                    stringResource(R.string.action_edit_hotkeys),
-                )
+            // 键盘弹起时隐藏 FAB，把有限的垂直空间腾给地址输入框（尤其在横屏下必要）
+            @OptIn(ExperimentalLayoutApi::class)
+            if (!WindowInsets.isImeVisible) {
+                FloatingActionButton(
+                    onClick = dropUnlessResumed {
+                        onNavigateToHotkeyList()
+                    },
+                    modifier = Modifier
+                        .padding(bottom = 48.dp),
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_edit_filled),
+                        stringResource(R.string.action_edit_hotkeys),
+                    )
+                }
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -211,12 +218,15 @@ fun HomeScreen(
                 onConnect = { onConnect(address.text) },
                 modifier = Modifier
                     .fillMaxWidth()
+                    // unbounded 让输入框拒绝被父 Column 挤压（横屏 + IME 时空间不够时保持自身内在高度）
+                    .wrapContentHeight(unbounded = true)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
             LazyColumn(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
-                    .weight(1f),
+                    // fill = false 允许在空间不足时收缩到 0，把空间让给上面的输入框
+                    .weight(1f, fill = false),
             ) {
                 items(items = uiState.hotkeys, key = { it.id }) { hotkey ->
                     HotkeyItem(
