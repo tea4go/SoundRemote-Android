@@ -1,0 +1,115 @@
+<resources>
+    <string name="delete">删除</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="edit">编辑</string>
+    <string name="clear">清除</string>
+    <string name="close">关闭</string>
+    <string name="navigate_up">返回</string>
+    <string name="app_info">应用信息</string>
+
+    <!--Permission-->
+    <string name="permission_caption">权限</string>
+    <string name="permission_granted_caption">已授权</string>
+    <string name="permission_required_caption">需要授权</string>
+    <string name="permission_denied_caption">已拒绝</string>
+    <string name="permission_show_info_caption">权限说明</string>
+    <string name="permission_tooltip_title">需要权限</string>
+    <string name="permission_tooltip_text_template">
+        此事件需要 %1$s 权限才能正常运行。
+        可在应用信息页面中授权。
+        可能需要重启应用。
+    </string>
+    <string name="permission_name_phone">电话</string>
+
+    <!--Messages-->
+    <string name="message_invalid_address">地址无效</string>
+    <string name="message_connect_failed">连接失败</string>
+    <string name="message_already_bound">绑定错误：已绑定</string>
+    <string name="message_bind_error">绑定错误</string>
+    <string name="message_disconnected">已断开连接</string>
+    <string name="message_audio_focus_request_failed">获取音频焦点失败</string>
+
+    <!--Home screen-->
+    <string name="connect_caption">连接</string>
+    <string name="disconnect_caption">断开连接</string>
+    <string name="server_address">服务器地址</string>
+    <string name="navigation_menu">导航菜单</string>
+    <string name="action_settings">设置</string>
+    <string name="action_about">关于</string>
+    <string name="action_edit_hotkeys">编辑快捷键</string>
+    <string name="action_events">事件</string>
+    <string name="action_recent_servers">显示最近服务器</string>
+    <string name="recent_servers_title">最近服务器</string>
+    <string name="action_mute_app">静音应用</string>
+    <string name="action_unmute_app">取消静音</string>
+
+    <!--Notification-->
+    <string name="notification_disconnected_text">已断开连接 🔴</string>
+    <string name="notification_muted_text">已静音 🔇</string>
+
+    <!--Hotkeys-->
+    <string name="hotkey_list_title">快捷键</string>
+    <string name="hotkey_delete_confirmation">删除快捷键？</string>
+    <string name="action_hotkey_create">创建</string>
+    <string name="drag_handle_description">拖动手柄</string>
+    <string name="hotkey_actions_menu_description">操作菜单</string>
+
+    <!--Hotkey edit-->
+    <string name="hotkey_create_title">创建快捷键</string>
+    <string name="hotkey_edit_title">编辑快捷键</string>
+    <string name="error_invalid_key">请输入英文字母或数字</string>
+    <string name="hotkey_name_edit_label">名称</string>
+    <string name="hotkey_name_edit_placeholder">留空自动填写</string>
+    <string name="hotkey_key_edit_label">按键（必填）</string>
+    <string name="hotkey_key_edit_hint">a–z 或 0–9</string>
+
+    <!--Hotkey select-->
+    <string name="hotkey_select_title">选择快捷键</string>
+    <string name="hotkey_select_none">无快捷键</string>
+
+    <!--Action select-->
+    <string name="action_select_title">选择动作</string>
+
+    <!--Events-->
+    <string name="event_list_title">事件</string>
+    <string name="event_name_call_start">来电开始</string>
+    <string name="event_name_call_end">来电结束</string>
+    <string name="event_name_shake">摇一摇</string>
+
+    <!--Settings-->
+    <string name="settings_title">设置</string>
+    <string name="settings_advanced_title">高级</string>
+    <string name="pref_server_port_title">服务器端口</string>
+    <string name="pref_client_port_title">客户端端口</string>
+    <string name="pref_compression_title">音频压缩</string>
+    <string name="pref_server_port_summary">必须与服务端使用的服务器端口一致。</string>
+    <string name="pref_client_port_summary">必须与服务端使用的客户端端口一致。</string>
+    <string name="pref_default_value_template">默认值：%1s。</string>
+    <string name="pref_ignore_focus_title">忽略音频焦点</string>
+    <string name="pref_ignore_focus_summary">允许与其他应用同时播放音频</string>
+
+    <!--About-->
+    <string name="about_title_template">关于 %s</string>
+    <string name="show_license">许可证</string>
+    <string name="open_homepage">主页</string>
+
+    <!--Compression-->
+    <string name="compression_none">不压缩</string>
+    <string name="compression_64">64 kbps</string>
+    <string name="compression_128">128 kbps</string>
+    <string name="compression_192">192 kbps</string>
+    <string name="compression_256">256 kbps</string>
+    <string name="compression_320">320 kbps</string>
+
+    <!--Action types-->
+    <string name="action_none">无动作</string>
+    <string name="action_type_app">应用程序</string>
+    <string name="action_type_hotkey">快捷键</string>
+
+    <!--App actions-->
+    <string name="app_action_mute">静音</string>
+    <string name="app_action_unmute">取消静音</string>
+    <string name="app_action_connect">连接</string>
+    <string name="app_action_disconnect">断开连接</string>
+</resources>
