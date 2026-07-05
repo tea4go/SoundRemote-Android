@@ -61,6 +61,7 @@ import io.github.soundremote.data.Hotkey
 import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.ListItemSupport
 import io.github.soundremote.ui.components.NavigateUpButton
+import io.github.soundremote.ui.theme.resolveHotkeyPalette
 import io.github.soundremote.util.TestTag
 import java.io.Serializable
 import kotlin.math.roundToInt
@@ -251,8 +252,10 @@ private fun HotkeyItem(
         else -> animateOffset.value
     }
     val draggedElevation = 8.dp
+    val palette = resolveHotkeyPalette(colorIndex, index)
     Surface(
         onClick = onEdit,
+        color = palette.content,
         tonalElevation = if (dragState == DragState.Dragged) draggedElevation else 0.dp,
         shadowElevation = if (dragState == DragState.Dragged) draggedElevation else 0.dp,
         modifier = modifier

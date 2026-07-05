@@ -75,27 +75,13 @@ import io.github.soundremote.R
 import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.ListItemSupport
 import io.github.soundremote.ui.theme.SoundRemoteTheme
+import io.github.soundremote.ui.theme.resolveHotkeyPalette
 import io.github.soundremote.util.ConnectionState
 import io.github.soundremote.util.HotkeyDescription
 import io.github.soundremote.util.Key
 import io.github.soundremote.util.TestTag
 
 private val listItemPadding = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-
-/**
- * 快捷键行的配色调板：整行底色 content + 顶部标题栏底色 title。
- * 参考 Delphi 项目里的 6 色循环方案（绿/黄/粉/紫/灰/蓝），按行 index 取模轮换。
- */
-private data class HotkeyPalette(val content: Color, val title: Color)
-
-private val hotkeyPalettes = listOf(
-    HotkeyPalette(Color(0xFFC5FCAA), Color(0xFFA6FA91)),  // 绿
-    HotkeyPalette(Color(0xFFFCF3A7), Color(0xFFFAE961)),  // 黄
-    HotkeyPalette(Color(0xFFF5C9C8), Color(0xFFF2B5B4)),  // 粉
-    HotkeyPalette(Color(0xFFBACAFB), Color(0xFFA1B7F8)),  // 紫
-    HotkeyPalette(Color(0xFFEEEEEE), Color(0xFFDADADA)),  // 灰
-    HotkeyPalette(Color(0xFFBEF2FD), Color(0xFFA5EEFD)),  // 蓝
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -251,10 +237,7 @@ fun HomeScreen(
                     .weight(1f, fill = false),
             ) {
                 itemsIndexed(items = uiState.hotkeys, key = { _, item -> item.id }) { idx, hotkey ->
-                    // 优先使用热键自身保存的 colorIndex；-1 时回退到按位置循环分配
-                    val paletteIdx = hotkey.colorIndex.takeIf { it in hotkeyPalettes.indices }
-                        ?: (idx % hotkeyPalettes.size)
-                    val palette = hotkeyPalettes[paletteIdx]
+                    val palette = resolveHotkeyPalette(hotkey.colorIndex, idx)
                     HotkeyItem(
                         name = hotkey.name,
                         description = hotkey.description.asString(),
