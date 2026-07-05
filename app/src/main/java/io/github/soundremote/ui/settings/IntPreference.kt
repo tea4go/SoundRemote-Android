@@ -35,18 +35,20 @@ internal fun IntPreference(
     defaultValue: Int? = null,
 ) {
     var showEdit by rememberSaveable { mutableStateOf(false) }
+    // 第一行：端口值（有 default 时追加"默认值：..."）
+    // 第二行：作为 hint 显示原始 summary（更小、更浅，像帮助提示）
     val summaryText = if (defaultValue == null) {
-        stringResource(R.string.pref_summary_template_short).format(value, summary)
+        value.toString()
     } else {
         val defaultValueText = stringResource(R.string.pref_default_value_template)
             .format(defaultValue)
-        stringResource(R.string.pref_summary_template)
-            .format(value, summary, defaultValueText)
+        "$value  $defaultValueText"
     }
 
     PreferenceItem(
         title = title,
         summary = summaryText,
+        hint = summary,
         onClick = { showEdit = true },
         modifier = modifier,
     )

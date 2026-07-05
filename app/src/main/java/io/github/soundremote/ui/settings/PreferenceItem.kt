@@ -4,8 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.soundremote.ui.components.ListItemHeadline
 import io.github.soundremote.ui.components.ListItemSupport
@@ -16,6 +19,7 @@ internal fun PreferenceItem(
     summary: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    hint: String? = null,
 ) {
     Column(
         modifier
@@ -25,5 +29,13 @@ internal fun PreferenceItem(
     ) {
         ListItemHeadline(title)
         ListItemSupport(summary)
+        if (!hint.isNullOrBlank()) {
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
