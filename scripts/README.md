@@ -5,18 +5,24 @@ Android release 构建、环境安装与版本管理脚本。
 ## 环境安装（Windows）
 
 ```powershell
-# 1. 基础工具（winget、Windows Terminal、Node.js 可选）
-.\scripts\windows\install_1_base_tools_bywin.ps1 -AddTools winget,terminal
+# 1. 基础工具（winget/Windows Terminal 可选，jvms + JDK 17 必需）
+.\scripts\windows\install_1_base_tools_bywin.ps1 -AddTools winget,terminal,jvms,jdk17
 
-# 2. Ruby（fastlane 依赖）
-.\scripts\windows\install_2_ruby_bywin.ps1
+# 或只装必需的
+.\scripts\windows\install_1_base_tools_bywin.ps1 -AddTools jvms,jdk17
 
-# 3. fastlane
-.\scripts\windows\install_3_fastlane_bywin.ps1
-
-# 4. Android SDK（cmdline-tools、platform-tools、build-tools）
+# 2. Android SDK（cmdline-tools、platform-tools、build-tools）
 .\scripts\windows\install_4_android_sdk_bywin.ps1
 ```
+
+安装完 JDK 17 后请**重新打开终端**，让新的 java 生效。
+
+**可用工具项：**
+- `winget` — Windows 包管理器
+- `terminal` — Windows Terminal
+- `store` — Microsoft Store
+- `jvms` — JDK Version Manager（用于统一管理 JDK 版本）
+- `jdk17` — 通过 jvms 安装 openjdk-17.0.2（本项目 Gradle 工具链要求）
 
 ## 构建 Android Release APK/AAB（Windows）
 
@@ -89,7 +95,9 @@ keytool -genkey -v `
 ## 卸载（Windows）
 
 ```powershell
+# 卸载 Android SDK
 .\scripts\windows\remove_1_android_sdk_bywin.ps1
-.\scripts\windows\remove_2_fastlane_bywin.ps1
-.\scripts\windows\remove_3_ruby_bywin.ps1
+
+# 卸载 JDK（通过 jvms）
+jvms remove openjdk-17.0.2
 ```

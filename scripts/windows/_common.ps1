@@ -855,7 +855,7 @@ function Assert-Java17 {
   # 检查 Java >= 17。OK 时 Write-Ok 并返回 $true；不满足时 Write-Fail 两条提示并返回 $false。
   # 由调用方决定是 exit 1 还是仅累积 $Failed。
   $ver = Get-JavaMajorVersion
-  $hint = '请从 https://adoptium.net/ 下载 JDK 17+，或运行：winget install EclipseAdoptium.Temurin.17.JDK'
+  $hint = '请通过 jvms 安装：.\scripts\windows\install_1_base_tools_bywin.ps1 -AddTools jdk17'
   if ($null -eq $ver) {
     Write-Fail "未找到 Java，需要 JDK 17+"
     Write-Fail $hint
@@ -888,7 +888,7 @@ function Assert-Java17 {
 function Assert-JavaForAndroid {
   param([int]$Min = 17, [int]$Max = 21)
   $ver = Get-JavaMajorVersion
-  $hint = "Android 构建需要 JDK $Min-$Max（推荐 21）。请用 jvms 切换：jvms use 21，或从 https://adoptium.net/ 安装 JDK 21。"
+  $hint = "本项目 Gradle 工具链要求 JDK 17。请通过 jvms 安装：.\scripts\windows\install_1_base_tools_bywin.ps1 -AddTools jdk17，或运行 jvms use openjdk-17.0.2。"
   if ($null -eq $ver) {
     Write-Fail "未找到 Java，需要 JDK $Min-$Max（推荐 21）"
     Write-Fail $hint
@@ -1065,61 +1065,7 @@ function Install-WingetPackage {
 
 <#
 .SYNOPSIS
-  查找包含 fastlane 声明的 Gemfile 所在目录。
-.OUTPUTS
-  [string] Gemfile 所在目录；找不到返回 null。
-.NOTES
-  优先检查 android\Gemfile，再检查仓库根 Gemfile；只有包含 gem 'fastlane'
-  的 Gemfile 才会被用于 bundle exec fastlane。
-#>
-function Get-FastlaneBundleRoot {
-  $candidates = @(
-    (Join-Path $script:RootDir 'android'),
-    $script:RootDir
-  )
-  foreach ($dir in $candidates) {
-    $gemfile = Join-Path $dir 'Gemfile'
-    if (-not (Test-Path -LiteralPath $gemfile)) { continue }
-    $content = Get-Content -LiteralPath $gemfile -Raw
-    if ($content -match "gem\s+['""]fastlane['""]") {
-      return $dir
-    }
-  }
-  return $null
-}
-
-<#
-.SYNOPSIS
-  解析 fastlane 调用方式。
-.OUTPUTS
-  [pscustomobject] 包含 Command、Arguments、Display；不可用返回 null。
-.NOTES
-  优先返回 bundle exec fastlane，符合 fastlane 官方推荐；只有没有可用
-  Bundler/Gemfile 时才回退全局 fastlane。
-#>
-function Get-FastlaneCommand {
-  $bundleRoot = Get-FastlaneBundleRoot
-  if ($bundleRoot -and (Get-ExePath 'bundle')) {
-    $env:BUNDLE_GEMFILE = Join-Path $bundleRoot 'Gemfile'
-    return [pscustomobject]@{
-      Command = 'bundle'
-      Arguments = @('exec', 'fastlane')
-      Display = 'bundle exec fastlane'
-    }
-  }
-  if (Get-ExePath 'fastlane') {
-    return [pscustomobject]@{
-      Command = 'fastlane'
-      Arguments = @()
-      Display = 'fastlane'
-    }
-  }
-  return $null
-}
-
-<#
-.SYNOPSIS
-  从 android\variables.gradle 读取 compileSdkVersion。
+  从 app\build.gradle.kts 读取 compileSdk。
 .OUTPUTS
   [string] Android API 版本号；读取失败默认返回 35。
 #>

@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-  在 Windows 上按需安装/卸载基础工具：winget、Windows Terminal、Microsoft Store、Node.js LTS。
+  在 Windows 上按需安装/卸载基础工具：winget、Windows Terminal、Microsoft Store、jvms、JDK 17。
 .DESCRIPTION
   主要流程：
   - 支持 -AddTools / -RemoveTools 指定工具列表；支持 all 代表全部
   - 对部分工具提供多种安装来源（GitHub/MS Store/winget），并尽量给出可复现的提示
-  - Node.js（提供 npm/npx）是后续 Ionic + Angular Web 构建的前置依赖
+  - jdk17 通过 jvms 安装（不用 winget），依赖 jvms 已安装
 .PARAMETER Yes
   自动确认（静默模式）。
 .PARAMETER AddTools
-  要安装的工具 Id 列表（winget/terminal/store/node 或 all）。
+  要安装的工具 Id 列表（winget/terminal/store/jvms/jdk17 或 all）。
 .PARAMETER RemoveTools
   要卸载的工具 Id 列表（terminal 或 all）。
 #>
@@ -35,7 +35,8 @@ $ToolDefs = @(
   @{ Id = 'winget'; Name = 'winget'; Description = 'Windows 包管理器' },
   @{ Id = 'terminal'; Name = 'Windows 终端'; Description = 'Windows Terminal（多标签终端）' },
   @{ Id = 'store'; Name = 'Microsoft Store'; Description = 'Microsoft Store（应用商店）' },
-  @{ Id = 'node'; Name = 'Node.js LTS'; Description = 'Node.js LTS（npm / npx / Ionic 构建前置）' }
+  @{ Id = 'jvms'; Name = 'JVMS'; Description = 'JVMS（JDK 版本管理器）' },
+  @{ Id = 'jdk17'; Name = 'JDK 17'; Description = 'JDK 17（Android 构建所需，通过 jvms 安装）' }
 )
 
 # ─── winget ───────────────────────────────────────────────────────────────────
@@ -683,51 +684,190 @@ function Install-MicrosoftStoreTool {
   return $false
 }
 
-# ─── Node.js ─────────────────────────────────────────────────────────────────
+# ─── JVMS（JDK Version Manager） ────────────────────────────────────────────
+# jvms 官方项目：https://github.com/ystyle/jvms
+# 使用 jvms 来统一安装/切换 JDK，避免污染系统。
 
-function Test-NodeTool {
-  $node = Get-ExePath 'node.exe'
-  $npm = Get-ExePath 'npm.cmd'
-  if (-not $npm) { $npm = Get-ExePath 'npm.exe' }
-  $npx = Get-ExePath 'npx.cmd'
-  if (-not $npx) { $npx = Get-ExePath 'npx.exe' }
+<#
+.SYNOPSIS
+  检测 jvms 是否可用（同时检查 PATH 和默认安装路径）。
+.OUTPUTS
+  [bool]
+#>
+function Test-JvmsTool {
+  $jvms = Get-ExePath 'jvms.exe'
+  if (-not $jvms) {
+    $default = Join-Path $env:USERPROFILE '.jvms\bin\jvms.exe'
+    if (Test-Path -LiteralPath $default) { $jvms = $default }
+  }
+  if (-not $jvms) { return $false }
 
-  if (-not $node -or -not $npm -or -not $npx) { return $false }
-
-  $nodeVersion = Invoke-NativeText -FilePath $node -Arguments @('--version') | Select-Object -First 1
-  $npmVersion = Invoke-NativeText -FilePath $npm -Arguments @('--version') | Select-Object -First 1
-  Write-Ok "Node.js 已安装"
-  Write-Host "    node：$node ($nodeVersion)"
-  Write-Host "    npm ：$npm ($npmVersion)"
-  Write-Host "    npx ：$npx"
+  $ver = (Invoke-NativeText -FilePath $jvms -Arguments @('version') |
+    Where-Object { $_ -match '[0-9]' } | Select-Object -First 1)
+  Write-Ok "jvms 已安装"
+  Write-Host "    路径：$jvms"
+  if (-not [string]::IsNullOrWhiteSpace($ver)) { Write-Host "    版本：$ver" }
   return $true
 }
 
-function Install-NodeTool {
+<#
+.SYNOPSIS
+  下载并安装 jvms（GitHub Releases + 加速镜像）。
+.OUTPUTS
+  [bool]
+.NOTES
+  jvms 是 Go 编写的单文件二进制，从 GitHub Releases 下载 jvms-vX.Y.Z-windows-amd64.zip，
+  解压到 %USERPROFILE%\.jvms\bin\，并把 bin 目录追加到用户 PATH。
+#>
+function Install-JvmsTool {
   Write-Host ""
-  Write-Host "═══ 安装 Node.js LTS ═══" -ForegroundColor Cyan
+  Write-Host "═══ 安装 jvms ═══" -ForegroundColor Cyan
   Write-Host ""
 
-  if (Test-NodeTool) { return $true }
-  if (-not (Confirm-Install "安装 Node.js LTS")) { return $false }
+  if (Test-JvmsTool) { return $true }
 
-  if (-not (Get-ExePath 'winget.exe')) {
-    Write-Fail "缺少 winget，无法自动安装 Node.js LTS"
-    Write-Fail "请手动安装：https://nodejs.org/"
-    return $false
+  Write-Host "  ✗ 未检测到 jvms" -ForegroundColor Red
+  Write-Host ""
+
+  if (-not (Confirm-Install "安装 jvms（JDK 版本管理器）")) { return $false }
+
+  # 尝试从 GitHub API 拿最新版下载地址（jvms 项目：ystyle/jvms）
+  $downloadUrl = $null
+  try {
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/ystyle/jvms/releases/latest' -TimeoutSec 15
+    $asset = $release.assets | Where-Object { $_.name -like '*windows-amd64.zip' } | Select-Object -First 1
+    if ($asset) { $downloadUrl = $asset.browser_download_url }
+    $ErrorActionPreference = $prev
+  } catch {
+    Write-Warn "无法获取 jvms 最新版下载地址，将使用固定版本"
   }
+
+  $urls = @()
+  if ($downloadUrl) {
+    $urls += "https://gh-proxy.org/$downloadUrl"
+    $urls += "https://cdn.gh-proxy.org/$downloadUrl"
+    $urls += "https://hk.gh-proxy.org/$downloadUrl"
+    $urls += "https://gh.llkk.cc/$downloadUrl"
+    $urls += $downloadUrl
+  }
+
+  $zipFile = Join-Path $env:TEMP ("jvms_{0}.zip" -f ([guid]::NewGuid().ToString('N')))
+  $extractDir = Join-Path $env:TEMP ("jvms_extract_{0}" -f ([guid]::NewGuid().ToString('N')))
+  New-DirectoryIfMissing $extractDir
+
+  $installDir = Join-Path $env:USERPROFILE '.jvms\bin'
+  New-DirectoryIfMissing $installDir
 
   try {
-    Invoke-NativeStream -Block { & winget install --id OpenJS.NodeJS.LTS --source winget --accept-package-agreements --accept-source-agreements }
+    if (-not (Save-WebFile -Urls $urls -OutFile $zipFile -TimeoutSec 120 -MinSizeKB 512)) {
+      Write-Fail "下载 jvms 安装包失败"
+      return $false
+    }
+
+    Expand-Archive -LiteralPath $zipFile -DestinationPath $extractDir -Force
+    $exe = Get-ChildItem -Path $extractDir -Recurse -Filter 'jvms.exe' | Select-Object -First 1
+    if (-not $exe) {
+      Write-Fail "解压后未找到 jvms.exe"
+      return $false
+    }
+
+    Copy-Item -LiteralPath $exe.FullName -Destination (Join-Path $installDir 'jvms.exe') -Force
+    Add-UserPathSegment -Segment $installDir | Out-Null
+    Add-PathPrefix $installDir
+
+    # 首次运行 init 建立目录结构
+    Invoke-NativeStream -Block { & (Join-Path $installDir 'jvms.exe') init }
+  } finally {
+    Remove-Item -LiteralPath $zipFile -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue
   }
-  catch {
-    Write-Fail "Node.js LTS 安装失败：$($_.Exception.Message)"
+
+  if (Test-JvmsTool) {
+    Write-Banner -Title 'jvms 安装成功' -Color Green
+    return $true
+  }
+  Write-Fail "jvms 自动安装失败，请手动下载：https://github.com/ystyle/jvms/releases"
+  return $false
+}
+
+# ─── JDK 17（通过 jvms 安装） ────────────────────────────────────────────────
+
+<#
+.SYNOPSIS
+  检测当前是否已切换到 JDK 17（jvms use 生效后 java -version 应为 17）。
+.OUTPUTS
+  [bool]
+#>
+function Test-Jdk17Tool {
+  $ver = Get-JavaMajorVersion
+  if ($null -eq $ver) { return $false }
+  if ($ver -ne 17) {
+    Write-Warn "当前 java 主版本为 $ver（期望 17）。若需切换：jvms use openjdk-17.0.2"
+    return $false
+  }
+  Write-Ok "JDK 17 已就绪"
+  Write-Host "    java：$(Get-ExePath 'java.exe')"
+  Write-Host "    版本：17"
+  return $true
+}
+
+<#
+.SYNOPSIS
+  通过 jvms 安装并切换到 JDK 17。
+.OUTPUTS
+  [bool]
+.NOTES
+  安装源使用华为镜像（jvms rls -t huawei 中的 openjdk-17.0.2）。
+#>
+function Install-Jdk17Tool {
+  Write-Host ""
+  Write-Host "═══ 安装 JDK 17 (via jvms) ═══" -ForegroundColor Cyan
+  Write-Host ""
+
+  if (Test-Jdk17Tool) { return $true }
+
+  if (-not (Test-JvmsTool)) {
+    Write-Fail "缺少 jvms，请先安装 jvms（本脚本 -AddTools jvms）"
     return $false
   }
 
-  if (Test-NodeTool) { return $true }
-  Write-Warn "Node.js 安装流程已执行，但当前 shell 未检测到 node/npm/npx"
-  Write-Warn "请重新打开终端后再次运行此脚本验证"
+  if (-not (Confirm-Install "通过 jvms 安装 JDK 17（openjdk-17.0.2）")) { return $false }
+
+  # 预加载华为镜像的远程列表，让 install 能从缓存解析到 openjdk-17.0.2
+  Write-Host "  加载 huawei 镜像的远程列表 ..." -ForegroundColor Cyan
+  Invoke-NativeStream -Block { & jvms rls -a -t huawei } | Out-Null
+
+  Write-Host "  下载并安装 openjdk-17.0.2（约 186MB） ..." -ForegroundColor Cyan
+  Invoke-NativeStream -Block { & jvms install openjdk-17.0.2 }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Fail "jvms install openjdk-17.0.2 失败"
+    return $false
+  }
+
+  Write-Host "  切换到 openjdk-17.0.2 ..." -ForegroundColor Cyan
+  Invoke-NativeStream -Block { & jvms use openjdk-17.0.2 }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Fail "jvms use openjdk-17.0.2 失败"
+    return $false
+  }
+
+  # jvms use 通过 junction 修改 %USERPROFILE%\jdk 指向，
+  # 但当前会话的 java.exe 可能还是老的（PATH 里其他 java 靠前）。
+  # 提示用户重开终端；同时验证 %USERPROFILE%\jdk\bin\java.exe 是否 17。
+  $sessionJdk = Join-Path $env:USERPROFILE 'jdk\bin\java.exe'
+  if (Test-Path -LiteralPath $sessionJdk) {
+    $line = (Invoke-NativeText -FilePath $sessionJdk -Arguments @('-version') | Select-Object -First 1)
+    if ($line -match '"17') {
+      Write-Ok "JDK 17 已就绪：$sessionJdk"
+      Write-Warn "当前 shell 的 java 可能仍指向旧版本，请重新打开终端后再构建"
+      return $true
+    }
+  }
+
+  if (Test-Jdk17Tool) { return $true }
+  Write-Warn "JDK 17 安装完成，但当前 shell 未检测到；请重新打开终端后再验证"
   return $false
 }
 
@@ -738,7 +878,8 @@ $ToolInstallers = @{
   'winget'   = ${function:Install-WingetTool}
   'terminal' = ${function:Install-WindowsTerminalTool}
   'store'    = ${function:Install-MicrosoftStoreTool}
-  'node'     = ${function:Install-NodeTool}
+  'jvms'     = ${function:Install-JvmsTool}
+  'jdk17'    = ${function:Install-Jdk17Tool}
 }
 
 # Id → Uninstall 函数 的映射
@@ -759,7 +900,7 @@ function Write-Usage {
   Write-Host "  .\install_base_tools_bywin.ps1 -RemoveTools <工具1,工具2,...>  卸载指定工具"
   Write-Host "  .\install_base_tools_bywin.ps1 -y -AddTools all               静默安装所有工具"
   Write-Host ""
-  Write-Host "可用工具：winget, terminal, store, node" -ForegroundColor Cyan
+  Write-Host "可用工具：winget, terminal, store, jvms, jdk17" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "可用工具：" -ForegroundColor Cyan
   foreach ($t in $ToolDefs) {
@@ -880,11 +1021,20 @@ if ($RemoveTools -and $RemoveTools.Count -gt 0) {
 
 # ── 安装流程 ──
 if ($AddTools -and $AddTools.Count -gt 0) {
-  # winget 是其他工具的前置依赖，如果选了非 winget 工具但缺少 winget，自动前置安装
-  $needsWinget = $AddTools | Where-Object { $_ -ne 'winget' -and $_ -ne 'store' }
+  # winget 是 terminal/store 之外其他工具的常用前置依赖；jdk17 只依赖 jvms 不依赖 winget。
+  $needsWinget = $AddTools | Where-Object { $_ -in @('terminal') }
   if ($needsWinget -and -not (Get-ExePath 'winget.exe') -and 'winget' -notin $AddTools) {
     Write-Warn "安装其他工具需要 winget，将先安装 winget"
     $AddTools = @('winget') + @($AddTools)
+  }
+
+  # jdk17 依赖 jvms，若选了 jdk17 但缺少 jvms，自动前置安装 jvms
+  if ('jdk17' -in $AddTools -and 'jvms' -notin $AddTools) {
+    $hasJvms = (Get-ExePath 'jvms.exe') -or (Test-Path -LiteralPath (Join-Path $env:USERPROFILE '.jvms\bin\jvms.exe'))
+    if (-not $hasJvms) {
+      Write-Warn "安装 JDK 17 需要 jvms，将先安装 jvms"
+      $AddTools = @('jvms') + @($AddTools)
+    }
   }
 
   $step = 0
