@@ -1,20 +1,20 @@
 <#
 .SYNOPSIS
-  在 Windows 上构建 Ionic + Capacitor 的 Android 发布产物（release APK/AAB），并完成签名环境校验。
+  在 Windows 上构建 SoundRemote Android 发布产物（release APK/AAB），并完成签名环境校验。
 .DESCRIPTION
   主要流程：
   1) 加载 scripts\local\android-signing.ps1 中的本地签名变量（keystore 密码等）
-  2) 校验签名环境：未设置的 BUILD_NUMBER/VERSION_NUMBER 自动从 android\app\build.gradle 读取 versionCode/versionName
-  3) 用 Ionic production 配置构建 Web 资源，再执行 Capacitor Android sync
-  4) 在 android 目录下按 fastlane 官方推荐执行 bundle exec fastlane build 产出 APK/AAB
+  2) 校验签名环境：BUILD_NUMBER/VERSION_NUMBER 自动从 app\build.gradle.kts 读取 versionCode/versionName
+  3) versionCode 自动递增并写回 build.gradle.kts
+  4) 生成临时 keystore.properties，执行 gradlew assembleRelease bundleRelease 产出 APK/AAB
 .PARAMETER Build
   构建 release APK/AAB（不发布）。versionCode 自动递增。
 .PARAMETER Check
-  只检查签名变量、npx、fastlane 是否可用，不执行 Web/Android 构建。
+  只检查签名变量、JDK 是否可用，不执行构建。
 .PARAMETER Publish
   仅发布：跳过构建，直接把已有 APK+AAB 发布到 Release。
   配合 -Platform 指定发布平台（github/gitee，默认 github）。
-  版本号从 build.gradle 读取（不递增），release 说明取自 RELEASE_NOTES.md。
+  版本号从 build.gradle.kts 读取（不递增），release 说明取自 RELEASE_NOTES.md。
   如需先构建再发布，请先 -Build 构建，再单独 -Publish 发布。
 .PARAMETER Platform
   发布平台，仅与 -Publish 搭配使用。可选值：github（默认）、gitee。
@@ -23,8 +23,7 @@
 .PARAMETER Help
   显示本帮助（参数说明与用法示例）后退出，不执行任何构建。
 .NOTES
-  本脚本只负责 Android release 构建；Ruby、fastlane、Android SDK 安装分别由
-  install_2_ruby_bywin.ps1、install_3_fastlane_bywin.ps1、install_4_android_sdk_bywin.ps1 处理。
+  本脚本只负责 Android release 构建；Android SDK 安装由 install_4_android_sdk_bywin.ps1 处理。
   不带任何参数运行时，默认显示本帮助。
 .EXAMPLE
   .\build_android_bywin.ps1 -Build
@@ -66,9 +65,9 @@ function Write-Usage {
   Write-Host ""
   Write-Host "参数：" -ForegroundColor Cyan
   Write-Host "  -Build     构建 release APK/AAB（不发布），versionCode 自动递增"
-  Write-Host "  -Check     只检查签名变量、npx、fastlane、JDK 是否就绪，不执行构建"
+  Write-Host "  -Check     只检查签名变量、JDK 是否就绪，不执行构建"
   Write-Host "  -Publish   跳过构建，直接把已有 APK+AAB 发布到 Release"
-  Write-Host "             (版本号从 build.gradle 读取，不递增；tag = v<versionName>+<versionCode>)"
+  Write-Host "             (版本号从 build.gradle.kts 读取，不递增；tag = v<versionName>+<versionCode>)"
   Write-Host "             (说明取自 RELEASE_NOTES.md)"
   Write-Host "  -Platform  发布平台（仅与 -Publish 搭配），可选：github（默认）、gitee"
   Write-Host "             - github：需已安装并登录 gh CLI"
@@ -97,42 +96,20 @@ $defaultAlias = 'soundremote'
 .NOTES
   Get-FastlaneCommand 会优先返回 bundle exec fastlane，只有找不到 Bundler/Gemfile 时才回退全局 fastlane。
 #>
-function Require-Fastlane {
-  if (Get-FastlaneCommand) { return $true }
-
-  $hint = @'
-
-构建 Android release 产物前，请先安装 fastlane。
-
-Windows 推荐方式：
-  1. 运行 scripts\windows.bak\install_2_ruby_bywin.ps1
-  2. 运行 scripts\windows.bak\install_3_fastlane_bywin.ps1
-  3. 如果刚安装了 Ruby，请重新打开 PowerShell
-
-手动安装：
-  1. 从 https://rubyinstaller.org/ 安装 Ruby 3.0+
-  2. gem install bundler
-  3. bundle install
-'@
-  Write-Fail '缺少必需命令: fastlane'
-  Write-Host $hint
-  return $false
-}
-
 <#
 .SYNOPSIS
   准备 Android release 构建所需签名环境变量。
 .OUTPUTS
   [bool] 所需变量与 keystore 文件齐全返回 true。
 .NOTES
-  BUILD_NUMBER / VERSION_NUMBER 默认来自 android\app\build.gradle；
+  BUILD_NUMBER / VERSION_NUMBER 默认来自 app\build.gradle.kts；
   KEYSTORE_FILE_PATH / KEYSTORE_FILE_ALIAS 使用本地默认值；
   KEYSTORE_FILE_PASSWORD 必须由用户在 scripts\local\android-signing.ps1 中提供。
 #>
 function Require-AndroidReleaseEnv {
-  # 版本号始终以 build.gradle 为准（忽略会话中可能残留的 $env:BUILD_NUMBER/VERSION_NUMBER，
-  # 避免旧值覆盖）。versionCode 读当前值 +1 自动递增；versionName 用当前值。
-  # 需手动设定版本时用 sync_version_bywin.ps1 -VersionName/-VersionCode 改 build.gradle。
+  # 版本号始终以 build.gradle.kts 为准（忽略会话中可能残留的 $env:BUILD_NUMBER/VERSION_NUMBER）。
+  # versionCode 读当前值 +1 自动递增；versionName 用当前值。
+  # 需手动设定版本时用 sync_version_bywin.ps1 -VersionName/-VersionCode 改 build.gradle.kts。
   $currentCode = Read-AndroidGradleValue 'versionCode'
   $parsed = 0
   if ([int]::TryParse($currentCode, [ref]$parsed)) {
@@ -207,7 +184,7 @@ if ($Publish) {
   }
 
   $tag = "v$env:VERSION_NUMBER+$env:BUILD_NUMBER"
-  $title = "MacroDeck Client v$env:VERSION_NUMBER ($env:BUILD_NUMBER)"
+  $title = "SoundRemote v$env:VERSION_NUMBER ($env:BUILD_NUMBER)"
   $notes = Get-Content -LiteralPath $notesFile -Raw -Encoding UTF8
   Write-Host "  发布 tag: $tag" -ForegroundColor Cyan
   Write-Host "  上传产物: $outName.apk, $outName.aab" -ForegroundColor Cyan
@@ -284,7 +261,7 @@ if ($Publish) {
       Write-Fail 'gh 未登录，请先运行：gh auth login'
       exit 1
     }
-    $repo = 'tea4go/Macro-Deck-Client-App'
+    $repo = 'tea4go/SoundRemote-Android'
     Invoke-NativeStream -Block {
       & gh release create $tag $apkPath $aabPath --title $title --notes-file $notesFile --repo $repo
     }
@@ -306,8 +283,6 @@ Load-AndroidSigningPs1 -FilePath $signingFile
 $ready = $true
 if (-not (Assert-JavaForAndroid)) { $ready = $false }
 if (-not (Require-AndroidReleaseEnv)) { $ready = $false }
-if (-not (Require-Command 'npx')) { $ready = $false }
-if (-not (Require-Fastlane)) { $ready = $false }
 
 if (-not $ready) {
   exit 1
@@ -323,24 +298,41 @@ if ($Check) {
   exit 0
 }
 
-Invoke-IonicBuild 'production'
-Invoke-CapSync 'android'
+# 把自增后的 versionCode 写回 build.gradle.kts
+if (-not (Set-AndroidGradleValue 'versionCode' $env:BUILD_NUMBER)) { exit 1 }
 
-$androidDir = Join-Path $script:RootDir 'android'
-$fastlane = Get-FastlaneCommand
-Write-Host "  $($fastlane.Display) 构建" -ForegroundColor Cyan
-$fastlaneCommand = $fastlane.Command
-$fastlaneArguments = @($fastlane.Arguments + @('build'))
-$code = Invoke-NativeIn -Path $androidDir -Block { & $fastlaneCommand @fastlaneArguments }
-if ($code -ne 0) { exit $code }
+# 生成临时 keystore.properties 供 Gradle 签名使用（构建结束后删除）
+$keystorePropsFile = Join-Path $script:RootDir 'keystore.properties'
+$storeFileFwd = ($env:KEYSTORE_FILE_PATH -replace '\\', '/')
+$keystoreContent = "keyAlias=$env:KEYSTORE_FILE_ALIAS`nkeyPassword=$env:KEYSTORE_FILE_PASSWORD`nstoreFile=$storeFileFwd`nstorePassword=$env:KEYSTORE_FILE_PASSWORD"
+[System.IO.File]::WriteAllText($keystorePropsFile, $keystoreContent, [System.Text.UTF8Encoding]::new($false))
+Write-Ok "keystore.properties 已写入（临时）"
 
-# fastlane 已把（自增后的）versionCode/versionName 写回 build.gradle，
-# 以它为源同步到 iOS 与 Web，保持三端版本一致。
+try {
+  Write-Host "  gradlew assembleRelease bundleRelease 构建" -ForegroundColor Cyan
+  $code = Invoke-NativeIn -Path $script:RootDir -Block {
+    & .\gradlew assembleRelease bundleRelease --no-daemon
+  }
+  if ($code -ne 0) { exit $code }
+} finally {
+  Remove-Item -LiteralPath $keystorePropsFile -Force -ErrorAction SilentlyContinue
+  Write-Ok "keystore.properties 已删除"
+}
+
 Sync-AppVersion
 
-$outName = "MacroDeckClient-$env:VERSION_NUMBER-$env:BUILD_NUMBER"
-$apkPath = Join-Path $script:RootDir "android\app\build\outputs\apk\release\$outName.apk"
-$aabPath = Join-Path $script:RootDir "android\app\build\outputs\bundle\release\$outName.aab"
+# 重命名产物为带版本号的文件名
+$outName = "SoundRemote-$env:VERSION_NUMBER-$env:BUILD_NUMBER"
+$apkSrc  = Join-Path $script:RootDir "app\build\outputs\apk\release\app-release.apk"
+$aabSrc  = Join-Path $script:RootDir "app\build\outputs\bundle\release\app-release.aab"
+$apkPath = Join-Path $script:RootDir "app\build\outputs\apk\release\$outName.apk"
+$aabPath = Join-Path $script:RootDir "app\build\outputs\bundle\release\$outName.aab"
+
+foreach ($pair in @(@($apkSrc, $apkPath), @($aabSrc, $aabPath))) {
+  if (Test-Path -LiteralPath $pair[0]) {
+    Move-Item -LiteralPath $pair[0] -Destination $pair[1] -Force
+  }
+}
 Write-Ok "Android release APK 产物: $apkPath"
 Write-Ok "Android release AAB 产物: $aabPath"
 
