@@ -61,6 +61,7 @@ fun NavGraphBuilder.settingsScreen(
             onSetIgnoreAudioFocus = viewModel::setIgnoreAudioFocus,
             onSetLanguage = viewModel::setLanguage,
             onSetUpdateSource = viewModel::setUpdateSource,
+            onSetServerPassword = viewModel::setServerPassword,
             onCheckUpdate = {
                 updateState = UpdateUiState.Checking
                 scope.launch {

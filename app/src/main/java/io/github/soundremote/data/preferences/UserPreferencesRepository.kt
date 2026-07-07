@@ -11,6 +11,7 @@ import io.github.soundremote.util.DEFAULT_AUDIO_COMPRESSION
 import io.github.soundremote.util.DEFAULT_CLIENT_PORT
 import io.github.soundremote.util.DEFAULT_IGNORE_AUDIO_FOCUS
 import io.github.soundremote.util.DEFAULT_SERVER_ADDRESS
+import io.github.soundremote.util.DEFAULT_SERVER_PASSWORD
 import io.github.soundremote.util.DEFAULT_SERVER_PORT
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -35,6 +36,7 @@ private const val KEY_AUDIO_COMPRESSION = "audio_compression"
 private const val KEY_IGNORE_AUDIO_FOCUS = "ignore_audio_focus"
 private const val KEY_LANGUAGE = "language"
 private const val KEY_UPDATE_SOURCE = "update_source"
+private const val KEY_SERVER_PASSWORD = "server_password"
 
 private const val SERVER_ADDRESSES_DELIMITER = ';'
 private const val SERVER_ADDRESSES_LIMIT = 5
@@ -52,6 +54,7 @@ class UserPreferencesRepository @Inject constructor(
         val IGNORE_AUDIO_FOCUS = booleanPreferencesKey(KEY_IGNORE_AUDIO_FOCUS)
         val LANGUAGE = stringPreferencesKey(KEY_LANGUAGE)
         val UPDATE_SOURCE = stringPreferencesKey(KEY_UPDATE_SOURCE)
+        val SERVER_PASSWORD = stringPreferencesKey(KEY_SERVER_PASSWORD)
     }
 
     private val preferencesFlow = dataStore.data
@@ -95,6 +98,10 @@ class UserPreferencesRepository @Inject constructor(
 
     override val updateSourceFlow: Flow<String> = preferencesFlow
         .map { preferences -> preferences[PreferencesKeys.UPDATE_SOURCE] ?: "gitee" }
+        .distinctUntilChanged()
+
+    override val serverPasswordFlow: Flow<String> = preferencesFlow
+        .map { preferences -> preferences[PreferencesKeys.SERVER_PASSWORD] ?: DEFAULT_SERVER_PASSWORD }
         .distinctUntilChanged()
 
     override suspend fun setServerAddress(serverAddress: String) {
@@ -167,4 +174,12 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     override suspend fun getUpdateSource(): String = updateSourceFlow.first()
+
+    override suspend fun setServerPassword(value: String) {
+        dataStore.edit { prefs ->
+            prefs[PreferencesKeys.SERVER_PASSWORD] = value
+        }
+    }
+
+    override suspend fun getServerPassword(): String = serverPasswordFlow.first()
 }

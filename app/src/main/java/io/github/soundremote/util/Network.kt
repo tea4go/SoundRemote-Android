@@ -24,7 +24,7 @@ typealias PacketKeyType = UByte
 typealias PacketModsType = UByte
 
 object Net {
-    const val PROTOCOL_VERSION: PacketProtocolType = 1u
+    const val PROTOCOL_VERSION: PacketProtocolType = 2u  // v2: 增加密码字段
     const val PROTOCOL_SIGNATURE: PacketSignatureType = 0xA571u
 
     /**
@@ -112,9 +112,10 @@ object Net {
 
     fun getConnectPacket(
         @Compression compression: Int,
-        requestId: PacketRequestIdType
+        requestId: PacketRequestIdType,
+        password: String = "",
     ): ByteBuffer {
-        val data = ConnectData(compression, requestId)
+        val data = ConnectData(compression, requestId, password)
         return createPacket(PacketCategory.CONNECT, data, ConnectData.SIZE)
     }
 

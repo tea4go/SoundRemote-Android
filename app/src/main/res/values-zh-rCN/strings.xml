@@ -113,6 +113,8 @@
     <string name="pref_compression_title">音频压缩</string>
     <string name="pref_server_port_summary">必须与服务端使用的服务器端口一致。</string>
     <string name="pref_client_port_summary">必须与服务端使用的客户端端口一致。</string>
+    <string name="pref_server_password_title">服务器密码</string>
+    <string name="pref_server_password_summary">必须与服务端设置的密码一致。</string>
     <string name="pref_default_value_template">默认值：%1s。</string>
     <string name="pref_ignore_focus_title">忽略音频焦点</string>
     <string name="pref_ignore_focus_summary">允许与其他应用同时播放音频</string>

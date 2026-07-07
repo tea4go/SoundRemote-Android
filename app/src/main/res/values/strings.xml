@@ -121,6 +121,8 @@
     <string name="pref_compression_title">Audio compression</string>
     <string name="pref_server_port_summary">Must match the server port used by the server.</string>
     <string name="pref_client_port_summary">Must match the client port used by the server.</string>
+    <string name="pref_server_password_title">Server password</string>
+    <string name="pref_server_password_summary">Must match the password set on the server.</string>
     <string name="pref_default_value_template">Default value: %1s.</string>
     <string name="pref_summary_template" translatable="false">%1$s: %2$s %3$s</string>
     <string name="pref_summary_template_short" translatable="false">%1$s: %2$s</string>

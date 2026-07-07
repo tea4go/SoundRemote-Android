@@ -94,12 +94,16 @@ internal class Connection(
     @Volatile
     private var audioSequenceNumber: UInt? = null
 
+    private var password_: String = ""
+
     suspend fun connect(
         address: String,
         serverPort: Int,
         localPort: Int,
-        @Net.Compression compression: Int
+        @Net.Compression compression: Int,
+        password: String = "",
     ) {
+        password_ = password
         shutdown()
         connectMutex.withLock {
             currentState = ConnectionState.CONNECTING
@@ -241,7 +245,7 @@ internal class Connection(
 
     private suspend fun sendConnect(@Net.Compression compression: Int) {
         val request = Request()
-        val packet = Net.getConnectPacket(compression, request.id)
+        val packet = Net.getConnectPacket(compression, request.id, password_)
         send(packet)
         pendingRequestsMutex.withLock {
             pendingRequests[Net.PacketCategory.CONNECT] = request

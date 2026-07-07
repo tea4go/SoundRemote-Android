@@ -21,6 +21,9 @@ interface PreferencesRepository {
     /** 更新源：见 [io.github.soundremote.util.UpdateSource]（gitee/github） */
     val updateSourceFlow: Flow<String>
 
+    /** 服务器连接密码（默认 testing123） */
+    val serverPasswordFlow: Flow<String>
+
     suspend fun setServerAddress(serverAddress: String)
 
     suspend fun getServerAddress(): String
@@ -48,4 +51,8 @@ interface PreferencesRepository {
     suspend fun setUpdateSource(value: String)
 
     suspend fun getUpdateSource(): String
+
+    suspend fun setServerPassword(value: String)
+
+    suspend fun getServerPassword(): String
 }

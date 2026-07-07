@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.soundremote.data.preferences.PreferencesRepository
 import io.github.soundremote.util.AppLanguage
+import io.github.soundremote.util.DEFAULT_SERVER_PASSWORD
 import io.github.soundremote.util.UpdateSource
 import io.github.soundremote.util.applyAppLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +23,8 @@ class SettingsViewModel @Inject constructor(
         preferencesRepository.settingsScreenPreferencesFlow,
         preferencesRepository.languageFlow,
         preferencesRepository.updateSourceFlow,
-    ) { prefs, languageTag, updateSourceTag ->
+        preferencesRepository.serverPasswordFlow,
+    ) { prefs, languageTag, updateSourceTag, password ->
         SettingsUIState(
             serverPort = prefs.serverPort,
             clientPort = prefs.clientPort,
@@ -30,6 +32,7 @@ class SettingsViewModel @Inject constructor(
             ignoreAudioFocus = prefs.ignoreAudioFocus,
             language = AppLanguage.fromTag(languageTag),
             updateSource = UpdateSource.fromTag(updateSourceTag),
+            serverPassword = password,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -64,6 +67,10 @@ class SettingsViewModel @Inject constructor(
     fun setUpdateSource(value: UpdateSource) {
         viewModelScope.launch { preferencesRepository.setUpdateSource(value.tag) }
     }
+
+    fun setServerPassword(value: String) {
+        viewModelScope.launch { preferencesRepository.setServerPassword(value) }
+    }
 }
 
 data class SettingsUIState(
@@ -73,4 +80,5 @@ data class SettingsUIState(
     val ignoreAudioFocus: Boolean = false,
     val language: AppLanguage = AppLanguage.AUTO,
     val updateSource: UpdateSource = UpdateSource.GITEE,
+    val serverPassword: String = DEFAULT_SERVER_PASSWORD,
 )

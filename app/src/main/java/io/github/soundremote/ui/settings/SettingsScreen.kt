@@ -37,6 +37,7 @@ import io.github.soundremote.ui.components.NavigateUpButton
 import io.github.soundremote.ui.theme.SoundRemoteTheme
 import io.github.soundremote.util.AppLanguage
 import io.github.soundremote.util.DEFAULT_CLIENT_PORT
+import io.github.soundremote.util.DEFAULT_SERVER_PASSWORD
 import io.github.soundremote.util.DEFAULT_SERVER_PORT
 import io.github.soundremote.util.Net
 import io.github.soundremote.util.UpdateSource
@@ -51,6 +52,7 @@ internal fun SettingsScreen(
     onSetIgnoreAudioFocus: (Boolean) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
     onSetUpdateSource: (UpdateSource) -> Unit,
+    onSetServerPassword: (String) -> Unit,
     onCheckUpdate: () -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
@@ -129,6 +131,13 @@ internal fun SettingsScreen(
                 validValues = validPorts,
                 defaultValue = DEFAULT_CLIENT_PORT,
             )
+            StringPreference(
+                title = stringResource(R.string.pref_server_password_title),
+                summary = stringResource(R.string.pref_server_password_summary),
+                value = settings.serverPassword,
+                onPreferenceChange = onSetServerPassword,
+                defaultValue = DEFAULT_SERVER_PASSWORD,
+            )
             var showAdvanced by remember { mutableStateOf(false) }
             if (showAdvanced) {
                 BooleanPreference(
@@ -197,6 +206,7 @@ private fun SettingsScreenPreview() {
             onSetIgnoreAudioFocus = {},
             onSetLanguage = {},
             onSetUpdateSource = {},
+            onSetServerPassword = {},
             onCheckUpdate = {},
             onNavigateUp = {},
         )

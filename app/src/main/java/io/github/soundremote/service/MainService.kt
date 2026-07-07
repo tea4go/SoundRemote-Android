@@ -231,7 +231,8 @@ internal class MainService : Service() {
             val serverPort = userPreferencesRepo.getServerPort()
             val clientPort = userPreferencesRepo.getClientPort()
             @Net.Compression val compression = userPreferencesRepo.getAudioCompression()
-            connection.connect(serverAddress, serverPort, clientPort, compression)
+            val password = userPreferencesRepo.getServerPassword()
+            connection.connect(serverAddress, serverPort, clientPort, compression, password)
         }
     }
 
